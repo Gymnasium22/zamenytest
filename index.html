@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Гимназия: Управление v3.1</title>
+    <title>Гимназия: Управление v3.2</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gymnasium%20Manager%20Pro%22%2C%22short_name%22%3A%22Gymnasium%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%5D%7D' />
@@ -244,7 +244,6 @@
 
              if(x === null || y === null) return null;
              
-             // Boundary check (simple)
              const style = { top: y, left: x };
              if (window.innerWidth - x < 200) style.left = x - 200;
 
@@ -286,13 +285,11 @@
             const [viewMode, setViewMode] = useState('class');
             const [filterId, setFilterId] = useState('');
             
-            // Context Menu State
             const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, item: null, cell: null });
             const [clipboard, setClipboard] = useState(null);
 
             const currentPeriods = SHIFT_PERIODS[selectedShift];
             
-            // Data Selectors
             const getRows = () => {
                 if (viewMode === 'class') return filterId ? data.classes.filter(c => c.id === filterId && c.shift === selectedShift) : data.classes.filter(c => c.shift === selectedShift);
                 if (viewMode === 'teacher') return filterId ? data.teachers.filter(t => t.id === filterId) : data.teachers;
@@ -308,7 +305,6 @@
             };
             const getTeacherConflict = (teacherId, currentClassId, period) => data.schedule.find(s => s.teacherId === teacherId && s.day === selectedDay && s.shift === selectedShift && s.period === period && s.classId !== currentClassId);
 
-            // Actions
             const handleEditItem = (item) => { if(readOnly) return; setTempItem(item); setIsEditorOpen(true); };
             const handleAddItem = (rowId, period) => {
                 if(readOnly) return;
@@ -332,10 +328,11 @@
                 setIsEditorOpen(false);
             };
 
-            // Context Menu Actions
+            // CRITICAL FIX: Added stopPropagation to prevent bubbling to cell
             const handleContextMenu = (e, item, cellInfo) => {
                 if(readOnly) return;
                 e.preventDefault();
+                e.stopPropagation(); 
                 setContextMenu({ visible: true, x: e.clientX, y: e.clientY, item, cell: cellInfo });
             };
 
@@ -351,7 +348,7 @@
                     contextActions.push({ label: 'Вставить', icon: 'Clipboard', onClick: async () => {
                          const newItem = { ...clipboard, id: Math.random().toString(36).substr(2, 9), day: selectedDay, shift: selectedShift, period: contextMenu.cell.period };
                          if(viewMode === 'class') newItem.classId = contextMenu.cell.rowId;
-                         // For other modes logic might differ, but for class mode this works well
+                         // Basic logic for other modes can be added here if needed
                          let newSchedule = [...data.schedule, newItem];
                          await saveData({ ...data, schedule: newSchedule });
                          setClipboard(null);
@@ -461,8 +458,9 @@
             );
         };
 
-        // ... (DirectoryPage, AdminPage, ReportsPage, ExportPage components remain mostly the same, just omitted for brevity as they don't need changes, but assume they are here)
-        // Re-including them to ensure full file integrity
+        // ... DirectoryPage, SubstitutionsPage, AdminPage, ReportsPage, ExportPage ... 
+        // (These components are identical to previous versions, kept for completeness in the single file structure)
+
         const DirectoryPage = () => {
             const { data, saveData } = useData();
             const [activeTab, setActiveTab] = useState('teachers');
@@ -533,7 +531,6 @@
                 if(location.state?.subParams) {
                     setCurrentSubParams(location.state.subParams);
                     setIsModalOpen(true);
-                    // Clear state to prevent reopening
                     window.history.replaceState({}, document.title);
                 }
             }, [location.state]);
@@ -648,7 +645,7 @@
                         <div className="h-full flex flex-col">
                             <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-700">
                                 <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
-                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v3.1</p></div>
+                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v3.2</p></div>
                                 <button className="lg:hidden ml-auto text-slate-400" onClick={() => setIsMobileMenuOpen(false)}><Icon name="X" size={24} /></button>
                             </div>
                             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -711,4 +708,3 @@
     </script>
 </body>
 </html>
-    
