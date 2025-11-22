@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Гимназия: Управление</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gymnasium%20Manager%20Pro%22%2C%22short_name%22%3A%22Gymnasium%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%5D%7D' />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Manrope', 'sans-serif'] },
+            colors: {
+              primary: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' }
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- DEPENDENCIES (Order is Critical) -->
+    <!-- 1. React Core -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- 2. History Library (Required for React Router v6 UMD) -->
+    <script crossorigin src="https://unpkg.com/history@5.3.0/umd/history.production.min.js"></script>
+
+    <!-- 3. React Router Core -->
+    <script crossorigin src="https://unpkg.com/react-router@6.3.0/umd/react-router.production.min.js"></script>
+
+    <!-- 4. React Router DOM -->
+    <script crossorigin src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      body { font-family: 'Manrope', sans-serif; background-color: #f8fafc; overscroll-behavior-y: none; }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      
+      /* Animations */
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+      
+      @media print {
+        .no-print { display: none !important; }
+        body { background: white; }
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef, createContext, useContext } = React;
+        
+        // Safe Access to ReactRouterDOM
+        const RRDOM = window.ReactRouterDOM;
+        if (!RRDOM) {
+            console.error("ReactRouterDOM not found. Check script tags.");
+        }
+        const { HashRouter, Routes, Route, Navigate, Outlet, NavLink, Link } = RRDOM;
+
+        // --- ICONS ---
+        // Replicating lucide-react icons as simple SVG components
+        const Icons = {
+            Calendar: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+            Repeat: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>,
+            Book: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+            Briefcase: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
+            Download: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+            Menu: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+            GraduationCap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Plus: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+            Trash2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
+            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            MapPin: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+            Filter: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
+            Users: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+            BookOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+            Edit2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
+            AlertCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+            CheckCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            UserX: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>,
+            ArrowRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+            Star: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            Upload: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+            Monitor: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>,
+            FileSpreadsheet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>,
+            AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+            Search: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+        };
+        
+        const Icon = ({ name, size = 24, className = "", ...props }) => {
+            const Comp = Icons[name];
+            if(!Comp) return null;
+            return <Comp width={size} height={size} className={className} {...props} />;
+        };
+
+        // --- CONSTANTS ---
+        const DayOfWeek = {
+            Monday: 'Пн', Tuesday: 'Вт', Wednesday: 'Ср', Thursday: 'Чт', Friday: 'Пт', Saturday: 'Сб'
+        };
+        const Shift = { First: '1 смена', Second: '2 смена' };
+        const DAYS = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday];
+        const SHIFT_PERIODS = { [Shift.First]: [1, 2, 3, 4, 5, 6, 7], [Shift.Second]: [0, 1, 2, 3, 4, 5, 6] };
+
+        const INITIAL_DATA = {
+            subjects: [
+                { id: 's1', name: 'Математика', color: '#e0e7ff' },
+                { id: 's2', name: 'Русский язык', color: '#dcfce7' },
+                { id: 's3', name: 'Литература', color: '#fef9c3' },
+                { id: 's4', name: 'Физика', color: '#f3e8ff' },
+                { id: 's5', name: 'История', color: '#ffedd5' },
+                { id: 's6', name: 'Информатика', color: '#cffafe' },
+            ],
+            teachers: [
+                { id: 't1', name: 'Иванова Анна Сергеевна', subjectIds: ['s1', 's4'], unavailableDates: [] },
+                { id: 't2', name: 'Петров Борис Михайлович', subjectIds: ['s2', 's3'], unavailableDates: [] },
+            ],
+            classes: [
+                { id: 'c1', name: '5А', shift: Shift.First },
+                { id: 'c2', name: '5Б', shift: Shift.First },
+                { id: 'c3', name: '6А', shift: Shift.Second },
+            ],
+            schedule: [],
+            substitutions: []
+        };
+
+        // --- INDEXEDDB SERVICE ---
+        const DB_NAME = 'GymnasiumDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'appData';
+        const KEY = 'root';
+
+        const dbService = {
+            open: () => {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME);
+                        }
+                    };
+                    request.onsuccess = (event) => resolve(event.target.result);
+                    request.onerror = (event) => reject(event.target.error);
+                });
+            },
+            save: async (data) => {
+                const db = await dbService.open();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(STORE_NAME, 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.put(data, KEY);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            },
+            load: async () => {
+                const db = await dbService.open();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(STORE_NAME, 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.get(KEY);
+                    request.onsuccess = () => resolve(request.result || INITIAL_DATA);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+            exportJson: (data) => {
+                const dataStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `gymnasium_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        };
+
+        // --- CONTEXT ---
+        const DataContext = createContext();
+        const DataProvider = ({ children }) => {
+            const [data, setInternalData] = useState(INITIAL_DATA);
+            const [isLoading, setIsLoading] = useState(true);
+
+            useEffect(() => {
+                dbService.load().then((loaded) => {
+                    setInternalData(loaded);
+                    setIsLoading(false);
+                }).catch(e => {
+                    console.error(e);
+                    setIsLoading(false);
+                });
+            }, []);
+
+            const saveData = async (newData) => {
+                setInternalData(newData);
+                await dbService.save(newData);
+            };
+
+            const resetData = async () => {
+                await saveData(INITIAL_DATA);
+            };
+
+            return (
+                <DataContext.Provider value={{ data, setData: setInternalData, isLoading, saveData, resetData }}>
+                    {children}
+                </DataContext.Provider>
+            );
+        };
+        const useData = () => useContext(DataContext);
+
+        // --- COMPONENTS ---
+        const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} flex flex-col max-h-[90vh]`}>
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                            <h2 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100">
+                                <Icon name="X" size={24} />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar">{children}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- PAGES ---
+
+        const SchedulePage = () => {
+            const { data, saveData } = useData();
+            const [selectedShift, setSelectedShift] = useState(Shift.First);
+            const [selectedDay, setSelectedDay] = useState(DayOfWeek.Monday);
+            const [isEditorOpen, setIsEditorOpen] = useState(false);
+            const [tempItem, setTempItem] = useState({});
+            const [filterClassId, setFilterClassId] = useState('');
+
+            const currentPeriods = SHIFT_PERIODS[selectedShift];
+            const classes = data.classes.filter(c => c.shift === selectedShift);
+            const filteredClasses = filterClassId ? classes.filter(c => c.id === filterClassId) : classes;
+
+            const getScheduleItems = (classId, period) => data.schedule.filter(s => s.classId === classId && s.period === period && s.day === selectedDay && s.shift === selectedShift);
+
+            const handleEditItem = (item) => { setTempItem(item); setIsEditorOpen(true); };
+            const handleAddItem = (classId, period) => { setTempItem({ classId, period, day: selectedDay, shift: selectedShift, id: Math.random().toString(36).substr(2, 9) }); setIsEditorOpen(true); };
+            
+            const handleSaveItem = async () => {
+                if (!tempItem.subjectId || !tempItem.teacherId || !tempItem.classId) return;
+                let newSchedule = [...data.schedule];
+                const idx = newSchedule.findIndex(s => s.id === tempItem.id);
+                if (idx >= 0) newSchedule[idx] = tempItem; else newSchedule.push(tempItem);
+                await saveData({ ...data, schedule: newSchedule });
+                setIsEditorOpen(false);
+            };
+
+            const handleDeleteItem = async () => {
+                const newSchedule = data.schedule.filter(s => s.id !== tempItem.id);
+                await saveData({ ...data, schedule: newSchedule });
+                setIsEditorOpen(false);
+            };
+
+            const recommendedTeachers = tempItem.subjectId ? data.teachers.filter(t => t.subjectIds.includes(tempItem.subjectId)) : [];
+
+            return (
+                <div className="h-full flex flex-col">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-4 items-center justify-between">
+                        <div className="flex gap-4 items-center flex-wrap">
+                            <div className="flex bg-slate-100 p-1 rounded-xl">
+                                <button onClick={() => setSelectedShift(Shift.First)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${selectedShift === Shift.First ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>1 смена</button>
+                                <button onClick={() => setSelectedShift(Shift.Second)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${selectedShift === Shift.Second ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>2 смена</button>
+                            </div>
+                            <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                            <div className="flex overflow-x-auto pb-1 gap-1 max-w-[50vw] hide-scrollbar">
+                                {DAYS.map(day => <button key={day} onClick={() => setSelectedDay(day)} className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all ${selectedDay === day ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:bg-slate-100'}`}>{day}</button>)}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1.5 pl-3">
+                            <Icon name="Filter" size={16} className="text-slate-400" />
+                            <select value={filterClassId} onChange={(e) => setFilterClassId(e.target.value)} className="bg-transparent text-sm font-bold text-slate-700 outline-none w-32">
+                                <option value="">Все классы</option>
+                                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex-1 bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                        <div className="overflow-auto flex-1 custom-scrollbar">
+                            <table className="w-full border-collapse min-w-[1000px]">
+                                <thead className="bg-slate-50 sticky top-0 z-20">
+                                    <tr>
+                                        <th className="p-4 border-b border-r border-slate-100 text-left text-xs font-extrabold text-slate-400 uppercase w-24 sticky left-0 bg-slate-50 z-30">Класс</th>
+                                        {currentPeriods.map(p => <th key={p} className="p-4 border-b border-slate-100 text-center text-xs font-extrabold text-slate-400 uppercase min-w-[140px]">{p} урок</th>)}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {filteredClasses.length > 0 ? filteredClasses.map(cls => (
+                                        <tr key={cls.id}>
+                                            <td className="p-4 border-r border-slate-100 font-black text-xl text-slate-700 sticky left-0 bg-white z-10 text-center">{cls.name}</td>
+                                            {currentPeriods.map(p => {
+                                                const items = getScheduleItems(cls.id, p);
+                                                return (
+                                                    <td key={p} className="p-2 border-r border-slate-50 h-28 align-top hover:bg-slate-50 transition-colors">
+                                                        <div className="h-full flex flex-col gap-1">
+                                                            {items.map(item => {
+                                                                const subj = data.subjects.find(s => s.id === item.subjectId);
+                                                                const teacher = data.teachers.find(t => t.id === item.teacherId);
+                                                                return (
+                                                                    <div key={item.id} onClick={() => handleEditItem(item)} className="rounded-lg p-2 text-xs shadow-sm hover:shadow-md cursor-pointer border border-slate-100 flex flex-col gap-0.5 flex-1 relative group" style={{ backgroundColor: subj?.color ? `${subj.color}40` : '#f1f5f9' }}>
+                                                                        <div className="flex justify-between items-center gap-1">
+                                                                            <span className="font-bold text-slate-800 line-clamp-1">{subj?.name}</span>
+                                                                            {item.direction && <span className="text-[9px] px-1 rounded bg-white/80 font-bold text-slate-600">{item.direction}</span>}
+                                                                        </div>
+                                                                        <div className="flex justify-between items-center mt-auto">
+                                                                            <div className="text-slate-600 text-[10px] flex items-center gap-1 truncate max-w-[80px]">
+                                                                                <Icon name="User" size={10} /> {teacher?.name.split(' ')[0]}
+                                                                            </div>
+                                                                            {item.roomId && <div className="text-[9px] font-mono text-slate-400 bg-white/50 rounded px-1 flex items-center gap-0.5"><Icon name="MapPin" size={8}/>{item.roomId}</div>}
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                            {items.length < 3 && <button onClick={() => handleAddItem(cls.id, p)} className={`w-full rounded-lg border-2 border-dashed flex items-center justify-center text-slate-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors mt-auto ${items.length === 0 ? 'h-full' : 'h-6'}`}><Icon name="Plus" size={16} /></button>}
+                                                        </div>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    )) : <tr><td colSpan={8} className="p-8 text-center text-slate-400">Классы не найдены</td></tr>}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <Modal isOpen={isEditorOpen} onClose={() => setIsEditorOpen(false)} title={tempItem.id && data.schedule.find(s=>s.id===tempItem.id) ? "Редактировать урок" : "Добавить урок"}>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Предмет</label>
+                                <select className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white outline-none focus:border-indigo-500" value={tempItem.subjectId || ''} onChange={e => setTempItem({...tempItem, subjectId: e.target.value, teacherId: ''})}>
+                                    <option value="">Выберите предмет</option>
+                                    {data.subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Группа (опционально)</label>
+                                <input className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white outline-none focus:border-indigo-500" placeholder="Например: 1 гр." value={tempItem.direction || ''} onChange={e => setTempItem({...tempItem, direction: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Учитель</label>
+                                <select className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white outline-none focus:border-indigo-500" value={tempItem.teacherId || ''} onChange={e => setTempItem({...tempItem, teacherId: e.target.value})} disabled={!tempItem.subjectId}>
+                                    <option value="">Выберите учителя</option>
+                                    {recommendedTeachers.length > 0 && <optgroup label="Рекомендуемые">{recommendedTeachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>}
+                                    <optgroup label="Все учителя">{data.teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Кабинет</label>
+                                <input className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white outline-none focus:border-indigo-500" value={tempItem.roomId || ''} onChange={e => setTempItem({...tempItem, roomId: e.target.value})} />
+                            </div>
+                            <div className="flex justify-between pt-4 border-t border-slate-100">
+                                {tempItem.id && data.schedule.find(s => s.id === tempItem.id) && <button onClick={handleDeleteItem} className="text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors"><Icon name="Trash2" size={16}/> Удалить</button>}
+                                <button onClick={handleSaveItem} className="ml-auto px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-bold shadow-lg shadow-indigo-200">Сохранить</button>
+                            </div>
+                        </div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        const DirectoryPage = () => {
+            const { data, saveData } = useData();
+            const [activeTab, setActiveTab] = useState('teachers');
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const [teacherForm, setTeacherForm] = useState({ subjectIds: [] });
+            const [subjectForm, setSubjectForm] = useState({ color: '#e0e7ff' });
+            const [classForm, setClassForm] = useState({ shift: Shift.First });
+
+            const openModal = (id) => {
+                setEditingId(id || null);
+                if (activeTab === 'teachers') setTeacherForm(id ? data.teachers.find(x => x.id === id) : { subjectIds: [], unavailableDates: [] });
+                else if (activeTab === 'subjects') setSubjectForm(id ? data.subjects.find(x => x.id === id) : { color: '#e0e7ff' });
+                else setClassForm(id ? data.classes.find(x => x.id === id) : { shift: Shift.First });
+                setIsModalOpen(true);
+            };
+
+            const handleSave = async () => {
+                const genId = () => Math.random().toString(36).substr(2, 9);
+                if (activeTab === 'teachers') {
+                    if (!teacherForm.name) return;
+                    let list = [...data.teachers];
+                    if (editingId) list = list.map(t => t.id === editingId ? { ...t, ...teacherForm } : t); else list.push({ ...teacherForm, id: genId(), unavailableDates: [] });
+                    await saveData({ ...data, teachers: list });
+                } else if (activeTab === 'subjects') {
+                    if (!subjectForm.name) return;
+                    let list = [...data.subjects];
+                    if (editingId) list = list.map(s => s.id === editingId ? { ...s, ...subjectForm } : s); else list.push({ ...subjectForm, id: genId() });
+                    await saveData({ ...data, subjects: list });
+                } else {
+                    if (!classForm.name) return;
+                    let list = [...data.classes];
+                    if (editingId) list = list.map(c => c.id === editingId ? { ...c, ...classForm } : c); else list.push({ ...classForm, id: genId() });
+                    await saveData({ ...data, classes: list });
+                }
+                setIsModalOpen(false);
+            };
+
+            const handleDelete = async (id) => {
+                if (!window.confirm("Удалить запись?")) return;
+                if (activeTab === 'teachers') await saveData({ ...data, teachers: data.teachers.filter(t => t.id !== id) });
+                if (activeTab === 'subjects') await saveData({ ...data, subjects: data.subjects.filter(s => s.id !== id) });
+                if (activeTab === 'classes') await saveData({ ...data, classes: data.classes.filter(c => c.id !== id) });
+            };
+
+            return (
+                <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-8 shrink-0">
+                        <div className="flex p-1 bg-white rounded-xl shadow-sm border border-slate-100">
+                            <button onClick={() => setActiveTab('teachers')} className={`px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'teachers' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}><Icon name="Users" size={18}/> Учителя</button>
+                            <button onClick={() => setActiveTab('subjects')} className={`px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'subjects' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}><Icon name="BookOpen" size={18}/> Предметы</button>
+                            <button onClick={() => setActiveTab('classes')} className={`px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'classes' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}><Icon name="GraduationCap" size={18}/> Классы</button>
+                        </div>
+                        <button onClick={() => openModal()} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 font-semibold"><Icon name="Plus" size={20} /> Добавить</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar pr-2">
+                        {activeTab === 'teachers' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {data.teachers.map(t => (
+                                    <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group flex flex-col">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-bold text-slate-800 text-lg">{t.name}</div>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => openModal(t.id)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 rounded-full"><Icon name="Edit2" size={16}/></button>
+                                                <button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 rounded-full"><Icon name="Trash2" size={16}/></button>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1 mt-auto">
+                                            {t.subjectIds.map(sid => { const s = data.subjects.find(sub => sub.id === sid); return s ? <span key={sid} className="text-xs px-2 py-1 rounded-md font-medium" style={{backgroundColor: s.color, color: '#334155'}}>{s.name}</span> : null })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {activeTab === 'subjects' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {data.subjects.map(s => (
+                                    <div key={s.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full shadow-inner border border-black/5" style={{backgroundColor: s.color}}></div>
+                                            <span className="font-bold text-slate-700">{s.name}</span>
+                                        </div>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => openModal(s.id)} className="p-1.5 text-slate-400 hover:text-indigo-600"><Icon name="Edit2" size={16}/></button>
+                                            <button onClick={() => handleDelete(s.id)} className="p-1.5 text-slate-400 hover:text-red-600"><Icon name="Trash2" size={16}/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {activeTab === 'classes' && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {data.classes.map(c => (
+                                    <div key={c.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center group hover:shadow-md transition-all relative">
+                                        <div className="text-2xl font-black text-slate-800 mb-1">{c.name}</div>
+                                        <div className={`text-xs font-bold px-2 py-0.5 rounded-full inline-block ${c.shift === Shift.First ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>{c.shift === Shift.First ? 'I' : 'II'} смена</div>
+                                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => openModal(c.id)} className="p-1 text-slate-400 hover:text-indigo-600"><Icon name="Edit2" size={14}/></button>
+                                            <button onClick={() => handleDelete(c.id)} className="p-1 text-slate-400 hover:text-red-600"><Icon name="Trash2" size={14}/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Редактирование">
+                        <div className="space-y-4">
+                            {activeTab === 'teachers' && (
+                                <>
+                                    <input className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white outline-none focus:border-indigo-500" placeholder="ФИО Учителя" value={teacherForm.name || ''} onChange={e => setTeacherForm({...teacherForm, name: e.target.value})} />
+                                    <div className="block text-xs font-bold text-slate-500 uppercase">Предметы</div>
+                                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar border border-slate-100 p-2 rounded-xl">
+                                        {data.subjects.map(s => (
+                                            <label key={s.id} className="flex items-center gap-2 p-1 rounded hover:bg-slate-50 cursor-pointer">
+                                                <input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" checked={teacherForm.subjectIds?.includes(s.id)} onChange={e => { const current = teacherForm.subjectIds || []; setTeacherForm({...teacherForm, subjectIds: e.target.checked ? [...current, s.id] : current.filter(x => x !== s.id)}); }} />
+                                                <span className="text-sm">{s.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            {activeTab === 'subjects' && (
+                                <>
+                                    <input className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white outline-none focus:border-indigo-500" placeholder="Название предмета" value={subjectForm.name || ''} onChange={e => setSubjectForm({...subjectForm, name: e.target.value})} />
+                                    <div className="flex items-center gap-4"><span className="text-sm font-bold text-slate-600">Цвет:</span><input type="color" className="w-20 h-10 cursor-pointer" value={subjectForm.color || '#ffffff'} onChange={e => setSubjectForm({...subjectForm, color: e.target.value})} /></div>
+                                </>
+                            )}
+                            {activeTab === 'classes' && (
+                                <>
+                                    <input className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white outline-none focus:border-indigo-500" placeholder="Название класса (5А)" value={classForm.name || ''} onChange={e => setClassForm({...classForm, name: e.target.value})} />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button onClick={() => setClassForm({...classForm, shift: Shift.First})} className={`p-3 rounded-xl border text-sm font-bold transition-all ${classForm.shift === Shift.First ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}>1 смена</button>
+                                        <button onClick={() => setClassForm({...classForm, shift: Shift.Second})} className={`p-3 rounded-xl border text-sm font-bold transition-all ${classForm.shift === Shift.Second ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}>2 смена</button>
+                                    </div>
+                                </>
+                            )}
+                            <div className="flex justify-end pt-4"><button onClick={handleSave} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-bold shadow-lg shadow-indigo-200">Сохранить</button></div>
+                        </div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        const SubstitutionsPage = () => {
+            const { data, saveData } = useData();
+            const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [currentSubParams, setCurrentSubParams] = useState(null);
+
+            const selectedDayOfWeek = useMemo(() => { const idx = new Date(selectedDate).getDay(); return idx === 0 ? null : DAYS[idx - 1]; }, [selectedDate]);
+            const absentTeachers = data.teachers.filter(t => t.unavailableDates.includes(selectedDate));
+            const affectedLessons = useMemo(() => {
+                if (!selectedDayOfWeek) return [];
+                const absentIds = absentTeachers.map(t => t.id);
+                return data.schedule.filter(s => s.day === selectedDayOfWeek && absentIds.includes(s.teacherId)).sort((a, b) => a.period - b.period);
+            }, [data.schedule, selectedDayOfWeek, absentTeachers]);
+
+            const toggleAbsence = async (id) => {
+                let list = [...data.teachers];
+                const t = list.find(x => x.id === id);
+                if (t.unavailableDates.includes(selectedDate)) t.unavailableDates = t.unavailableDates.filter(d => d !== selectedDate); else t.unavailableDates.push(selectedDate);
+                await saveData({ ...data, teachers: list });
+            };
+
+            const assignSubstitution = async (replacementId) => {
+                if (!currentSubParams) return;
+                let newSubs = [...data.substitutions];
+                const existingIdx = newSubs.findIndex(s => s.scheduleItemId === currentSubParams.scheduleItemId && s.date === selectedDate);
+                const item = data.schedule.find(s => s.id === currentSubParams.scheduleItemId);
+                const sub = { id: existingIdx >= 0 ? newSubs[existingIdx].id : Math.random().toString(36).substr(2, 9), date: selectedDate, scheduleItemId: currentSubParams.scheduleItemId, originalTeacherId: item.teacherId, replacementTeacherId: replacementId };
+                if (existingIdx >= 0) newSubs[existingIdx] = sub; else newSubs.push(sub);
+                await saveData({ ...data, substitutions: newSubs });
+                setIsModalOpen(false);
+            };
+
+            const removeSubstitution = async (id) => {
+                const newSubs = data.substitutions.filter(s => !(s.scheduleItemId === id && s.date === selectedDate));
+                await saveData({ ...data, substitutions: newSubs });
+            };
+
+            const candidates = useMemo(() => {
+                if (!currentSubParams || !selectedDayOfWeek) return [];
+                return data.teachers.map(t => {
+                    const isAbsent = t.unavailableDates.includes(selectedDate);
+                    const isBusy = data.schedule.some(s => s.teacherId === t.id && s.day === selectedDayOfWeek && s.period === currentSubParams.period && s.shift === currentSubParams.shift);
+                    const isSpecialist = t.subjectIds.includes(currentSubParams.subjectId);
+                    let score = 0; if (isAbsent) score -= 1000; if (isBusy) score -= 100; if (isSpecialist) score += 50;
+                    return { teacher: t, isAbsent, isBusy, isSpecialist, score };
+                }).sort((a, b) => b.score - a.score);
+            }, [data, currentSubParams, selectedDate]);
+
+            return (
+                <div className="h-full flex flex-col md:flex-row gap-6">
+                    <div className="w-full md:w-80 flex flex-col gap-6">
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Дата замены</label>
+                            <div className="relative"><Icon name="Calendar" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18}/><input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full pl-10 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"/></div>
+                        </div>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-1 overflow-hidden flex flex-col">
+                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Icon name="UserX" size={18} className="text-red-500"/> Отсутствующие</h3>
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2">
+                                {data.teachers.map(t => {
+                                    const isAbsent = t.unavailableDates.includes(selectedDate);
+                                    return (
+                                        <div key={t.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isAbsent ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
+                                            <span className={`text-sm font-medium ${isAbsent ? 'text-red-700' : 'text-slate-600'}`}>{t.name}</span>
+                                            <button onClick={() => toggleAbsence(t.id)} className={`text-xs px-2 py-1 rounded-lg font-bold transition-colors ${isAbsent ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:bg-slate-200'}`}>{isAbsent ? 'Вернуть' : 'Нет'}</button>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+                        <h2 className="text-xl font-bold text-slate-800 mb-6">Требуют замены ({affectedLessons.length})</h2>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+                            {affectedLessons.length === 0 ? <div className="h-full flex flex-col items-center justify-center text-slate-400"><Icon name="CheckCircle" size={48} className="mb-4 text-slate-200"/><p>Нет уроков, требующих замены</p></div> : affectedLessons.map(l => {
+                                const sub = data.substitutions.find(s => s.scheduleItemId === l.id && s.date === selectedDate);
+                                const rep = sub ? data.teachers.find(t => t.id === sub.replacementTeacherId) : null;
+                                const orig = data.teachers.find(t => t.id === l.teacherId);
+                                const subj = data.subjects.find(s => s.id === l.subjectId);
+                                const cls = data.classes.find(c => c.id === l.classId);
+                                return (
+                                    <div key={l.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-indigo-600"><span className="text-[10px] font-bold uppercase text-slate-400 leading-none">Урок</span><span className="text-xl font-black leading-none mt-1">{l.period}</span></div>
+                                            <div><div className="flex items-center gap-2 mb-1"><span className="font-bold text-lg text-slate-800">{cls?.name}</span><span className="text-xs font-medium text-slate-500 bg-slate-200 px-2 rounded">{cls?.shift}</span></div><div className="text-sm text-slate-600 flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{backgroundColor: subj?.color}}></span>{subj?.name}<span className="text-slate-400 mx-1">•</span><span className="line-through decoration-red-400 decoration-2">{orig?.name}</span></div></div>
+                                        </div>
+                                        {rep ? (
+                                            <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 pl-4 pr-2 py-2 rounded-xl">
+                                                <div><div className="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">Замена назначена</div><div className="font-bold text-emerald-900 text-sm">{rep.name}</div></div>
+                                                <button onClick={() => removeSubstitution(l.id)} className="p-2 bg-white rounded-lg text-emerald-200 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm"><Icon name="UserX" size={16}/></button>
+                                            </div>
+                                        ) : (
+                                            <button onClick={() => { setCurrentSubParams({ scheduleItemId: l.id, subjectId: l.subjectId, period: l.period, shift: l.shift }); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 xl:w-auto w-full">Найти замену <Icon name="ArrowRight" size={16}/></button>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Выбор замены">
+                        <div className="space-y-2">
+                            {candidates.map(({ teacher, isAbsent, isBusy, isSpecialist }) => (
+                                <button key={teacher.id} disabled={isAbsent || isBusy} onClick={() => assignSubstitution(teacher.id)} className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all text-left ${isAbsent ? 'bg-red-50 border-red-100 opacity-60' : isBusy ? 'bg-orange-50 border-orange-100 opacity-60' : 'bg-white border-slate-100 hover:border-indigo-500 hover:shadow-md'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isSpecialist ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{isSpecialist ? <Icon name="Star" size={14} fill="currentColor"/> : teacher.name[0]}</div>
+                                        <div><div className="font-bold text-sm text-slate-800">{teacher.name}</div><div className="text-xs text-slate-500">{isSpecialist && <span className="text-emerald-600 mr-2">Профиль</span>}{isBusy && <span className="text-orange-600">Занят</span>}{isAbsent && <span className="text-red-600">Отсутствует</span>}</div></div>
+                                    </div>
+                                    {!isAbsent && !isBusy && <div className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">Выбрать</div>}
+                                </button>
+                            ))}
+                        </div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        const AdminPage = () => {
+            const { data } = useData();
+            const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+            const [afterPeriod, setAfterPeriod] = useState(4);
+            const selectedDayOfWeek = useMemo(() => { const idx = new Date(selectedDate).getDay(); return idx === 0 ? null : DAYS[idx - 1]; }, [selectedDate]);
+            const freeTeachers = useMemo(() => {
+                if (!selectedDayOfWeek) return [];
+                return data.teachers.filter(t => {
+                    if (t.unavailableDates.includes(selectedDate)) return false;
+                    return !data.schedule.some(s => s.teacherId === t.id && s.day === selectedDayOfWeek && s.period > afterPeriod);
+                }).sort((a, b) => a.name.localeCompare(b.name));
+            }, [data, selectedDate, afterPeriod]);
+
+            return (
+                <div className="max-w-5xl mx-auto w-full">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
+                        <h1 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3"><Icon name="Search" className="text-indigo-600" />Поиск свободных учителей</h1>
+                        <div className="flex flex-wrap gap-8">
+                            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Дата</label><input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="border border-slate-200 p-3 rounded-xl font-bold outline-none focus:border-indigo-500" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Свободен после урока №</label><div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">{[1, 2, 3, 4, 5, 6, 7].map(num => <button key={num} onClick={() => setAfterPeriod(num)} className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${afterPeriod === num ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{num}</button>)}</div></div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {freeTeachers.map(t => (
+                            <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Icon name="CheckCircle" size={24} /></div>
+                                <div><div className="font-bold text-slate-800">{t.name}</div><div className="flex flex-wrap gap-1 mt-1">{t.subjectIds.slice(0, 2).map(sid => { const s = data.subjects.find(sub => sub.id === sid); return s ? <span key={sid} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{s.name}</span> : null })}</div></div>
+                            </div>
+                        ))}
+                        {freeTeachers.length === 0 && <div className="col-span-full py-12 text-center text-slate-400">Не найдено учителей, свободных после {afterPeriod} урока.</div>}
+                    </div>
+                </div>
+            );
+        };
+
+        const ExportPage = () => {
+            const { data, saveData, resetData } = useData();
+            const fileInputRef = useRef(null);
+            const handleImport = (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    try {
+                        const json = JSON.parse(ev.target.result);
+                        if (json.teachers && json.schedule) {
+                            if(window.confirm("Это перезапишет текущую базу данных. Продолжить?")) { await saveData(json); alert("База успешно восстановлена!"); }
+                        } else alert("Неверный формат файла.");
+                    } catch (err) { alert("Ошибка чтения файла."); }
+                };
+                reader.readAsText(file);
+            };
+
+            const exportExcel = () => {
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFFClass,Day,Shift,Period,Subject,Teacher\n";
+                data.schedule.forEach(s => {
+                    const c = data.classes.find(cls => cls.id === s.classId);
+                    const sub = data.subjects.find(subj => subj.id === s.subjectId);
+                    const t = data.teachers.find(tch => tch.id === s.teacherId);
+                    csvContent += `${c?.name},${s.day},${s.shift},${s.period},${sub?.name},${t?.name}\n`;
+                });
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "schedule_export.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Icon name="Download" className="text-indigo-600"/> Резервное копирование</h2>
+                        <p className="text-slate-500 mb-6 text-sm">Скачайте полную копию базы данных (JSON).</p>
+                        <div className="flex flex-wrap gap-4">
+                            <button onClick={() => dbService.exportJson(data)} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 flex items-center gap-2"><Icon name="Download" size={20}/> Скачать JSON</button>
+                            <div className="relative"><input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition flex items-center gap-2"><Icon name="Upload" size={20}/> Загрузить JSON</button></div>
+                        </div>
+                    </section>
+                    <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Icon name="FileSpreadsheet" className="text-emerald-600"/> Экспорт данных</h2>
+                        <button onClick={exportExcel} className="px-6 py-3 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl font-bold hover:bg-emerald-100 transition flex items-center gap-2"><Icon name="FileSpreadsheet" size={20}/> Скачать CSV (Excel)</button>
+                    </section>
+                    <section className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl shadow-indigo-200">
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2"><Icon name="Monitor" className="text-indigo-300"/> Режим "Табло для холла"</h2>
+                        <p className="text-indigo-200 mb-6 text-sm">Крупный шрифт для отображения на ТВ.</p>
+                        <Link to="/print-board" target="_blank" className="inline-flex px-6 py-3 bg-white text-indigo-900 rounded-xl font-bold hover:bg-indigo-50 transition items-center gap-2">Открыть табло <Icon name="Monitor" size={20}/></Link>
+                    </section>
+                    <section className="bg-red-50 p-6 rounded-2xl border border-red-100 mt-10">
+                        <h2 className="text-lg font-bold text-red-700 mb-2 flex items-center gap-2"><Icon name="AlertTriangle" size={20}/> Опасная зона</h2>
+                        <button onClick={() => { if(window.confirm("Вы уверены? Это сотрет все данные.")) resetData(); }} className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg text-sm font-bold hover:bg-red-50">Сбросить базу данных (Reset)</button>
+                    </section>
+                </div>
+            );
+        };
+
+        const PrintBoardPage = () => {
+            const { data } = useData();
+            const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+            const subs = data.substitutions.filter(s => s.date === date);
+
+            return (
+                <div className="min-h-screen bg-white text-black p-8 font-sans selection:bg-black selection:text-white">
+                    <div className="flex justify-between items-end border-b-4 border-black pb-6 mb-8">
+                        <div><h1 className="text-6xl font-black uppercase tracking-tighter mb-2">Замены</h1><p className="text-2xl font-bold text-slate-500 uppercase tracking-widest">Гимназия • Информационное табло</p></div>
+                        <div className="text-right"><input type="date" value={date} onChange={e => setDate(e.target.value)} className="text-4xl font-bold text-right outline-none bg-transparent"/></div>
+                    </div>
+                    {subs.length === 0 ? <div className="text-center py-40"><h2 className="text-4xl text-slate-300 font-bold uppercase">Замен на этот день нет</h2></div> : (
+                        <div className="grid grid-cols-1 gap-4">
+                            <div className="grid grid-cols-12 gap-4 border-b-2 border-slate-200 pb-2 text-xl font-bold text-slate-500 uppercase tracking-wider"><div className="col-span-1 text-center">Урок</div><div className="col-span-2">Класс</div><div className="col-span-3">Предмет</div><div className="col-span-3 text-red-400">Отсутствует</div><div className="col-span-3 text-emerald-600">Заменяет</div></div>
+                            {subs.map(sub => {
+                                const s = data.schedule.find(x => x.id === sub.scheduleItemId);
+                                if (!s) return null;
+                                const cls = data.classes.find(c => c.id === s.classId);
+                                const subj = data.subjects.find(x => x.id === s.subjectId);
+                                const t1 = data.teachers.find(t => t.id === sub.originalTeacherId);
+                                const t2 = data.teachers.find(t => t.id === sub.replacementTeacherId);
+                                return (
+                                    <div key={sub.id} className="grid grid-cols-12 gap-4 items-center py-4 border-b border-slate-100 text-2xl font-bold bg-slate-50 rounded-lg px-2"><div className="col-span-1 text-center bg-black text-white rounded-lg py-1">{s.period}</div><div className="col-span-2">{cls?.name} <span className="text-sm text-slate-400 align-middle ml-2">{cls?.shift}</span></div><div className="col-span-3 text-slate-700">{subj?.name}</div><div className="col-span-3 text-slate-400 line-through decoration-2 decoration-red-400">{t1?.name}</div><div className="col-span-3 text-emerald-700">{t2?.name}</div></div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    <div className="fixed bottom-4 right-4 text-xs text-slate-300">Generated by Gymnasium Manager</div>
+                </div>
+            );
+        };
+
+        // --- LAYOUT ---
+        const Layout = () => {
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+            const navItems = [
+                { to: '/schedule', label: 'Расписание', icon: 'Calendar' },
+                { to: '/substitutions', label: 'Замены', icon: 'Repeat' },
+                { to: '/directory', label: 'Справочники', icon: 'Book' },
+                { to: '/admin', label: 'Администрация', icon: 'Briefcase' },
+                { to: '/export', label: 'Экспорт / Бэкап', icon: 'Download' },
+            ];
+
+            return (
+                <div className="flex h-screen bg-slate-50 overflow-hidden">
+                    {isMobileMenuOpen && <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}/>}
+                    <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                        <div className="h-full flex flex-col">
+                            <div className="p-6 flex items-center gap-3 border-b border-slate-100">
+                                <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
+                                <div><h1 className="text-lg font-black tracking-tight text-slate-800">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v2.0</p></div>
+                                <button className="lg:hidden ml-auto text-slate-400" onClick={() => setIsMobileMenuOpen(false)}><Icon name="X" size={24} /></button>
+                            </div>
+                            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                                {navItems.map((item) => (
+                                    <NavLink key={item.to} to={item.to} onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${isActive ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
+                                        <Icon name={item.icon} size={20} strokeWidth={2} />{item.label}
+                                    </NavLink>
+                                ))}
+                            </nav>
+                            <div className="p-4 border-t border-slate-100">
+                                <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-4 text-white">
+                                    <p className="text-xs text-slate-300 font-medium mb-1">Статус базы данных</p>
+                                    <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div><span className="text-xs font-bold">IndexedDB: Active</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                    <main className="flex-1 flex flex-col min-w-0 bg-slate-50/50">
+                        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 lg:hidden sticky top-0 z-30 px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3"><button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg"><Icon name="Menu" size={24} /></button><span className="font-bold text-slate-800">Меню</span></div>
+                        </header>
+                        <div className="flex-1 overflow-auto p-4 lg:p-8"><Outlet /></div>
+                    </main>
+                </div>
+            );
+        };
+
+        // --- APP ---
+        const App = () => {
+            return (
+                <DataProvider>
+                    <HashRouter>
+                        <Routes>
+                            <Route path="/" element={<Layout />}>
+                                <Route index element={<Navigate to="/schedule" replace />} />
+                                <Route path="schedule" element={<SchedulePage />} />
+                                <Route path="substitutions" element={<SubstitutionsPage />} />
+                                <Route path="directory" element={<DirectoryPage />} />
+                                <Route path="admin" element={<AdminPage />} />
+                                <Route path="export" element={<ExportPage />} />
+                            </Route>
+                            <Route path="/print-board" element={<PrintBoardPage />} />
+                        </Routes>
+                    </HashRouter>
+                </DataProvider>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
