@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Гимназия: Управление v5.0</title>
+    <title>Гимназия: Управление v5.1</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gymnasium%20Manager%20Pro%22%2C%22short_name%22%3A%22Gymnasium%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%5D%7D' />
@@ -69,17 +68,6 @@
         .dark * { background-color: white !important; color: black !important; border-color: #e2e8f0 !important; }
       }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
-  }
-}
-</script>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-dark-950 dark:text-slate-100 transition-colors duration-300">
     <div id="root"></div>
@@ -149,22 +137,25 @@
         const DAYS = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday];
         const SHIFT_PERIODS = { [Shift.First]: [1, 2, 3, 4, 5, 6, 7], [Shift.Second]: [0, 1, 2, 3, 4, 5, 6] };
         
+        // НАЧАЛО: Новая функция [Специфичные звонки]
+        // Изменена структура DEFAULT_BELLS, добавлено поле 'day'
         const DEFAULT_BELLS = [
-            { shift: Shift.First, period: 1, start: "08:00", end: "08:45" },
-            { shift: Shift.First, period: 2, start: "08:55", end: "09:40" },
-            { shift: Shift.First, period: 3, start: "09:50", end: "10:35" },
-            { shift: Shift.First, period: 4, start: "10:55", end: "11:40" },
-            { shift: Shift.First, period: 5, start: "11:50", end: "12:35" },
-            { shift: Shift.First, period: 6, start: "12:40", end: "13:25" },
-            { shift: Shift.First, period: 7, start: "13:30", end: "14:15" },
-            { shift: Shift.Second, period: 0, start: "13:30", end: "14:15" },
-            { shift: Shift.Second, period: 1, start: "14:20", end: "15:05" },
-            { shift: Shift.Second, period: 2, start: "15:15", end: "16:00" },
-            { shift: Shift.Second, period: 3, start: "16:10", end: "16:55" },
-            { shift: Shift.Second, period: 4, start: "17:05", end: "17:50" },
-            { shift: Shift.Second, period: 5, start: "18:00", end: "18:45" },
-            { shift: Shift.Second, period: 6, start: "18:50", end: "19:35" }
+            { shift: Shift.First, period: 1, start: "08:00", end: "08:45", day: "default" },
+            { shift: Shift.First, period: 2, start: "08:55", end: "09:40", day: "default" },
+            { shift: Shift.First, period: 3, start: "09:50", end: "10:35", day: "default" },
+            { shift: Shift.First, period: 4, start: "10:55", end: "11:40", day: "default" },
+            { shift: Shift.First, period: 5, start: "11:50", end: "12:35", day: "default" },
+            { shift: Shift.First, period: 6, start: "12:40", end: "13:25", day: "default" },
+            { shift: Shift.First, period: 7, start: "13:30", end: "14:15", day: "default" },
+            { shift: Shift.Second, period: 0, start: "13:30", end: "14:15", day: "default" },
+            { shift: Shift.Second, period: 1, start: "14:20", end: "15:05", day: "default" },
+            { shift: Shift.Second, period: 2, start: "15:15", end: "16:00", day: "default" },
+            { shift: Shift.Second, period: 3, start: "16:10", end: "16:55", day: "default" },
+            { shift: Shift.Second, period: 4, start: "17:05", end: "17:50", day: "default" },
+            { shift: Shift.Second, period: 5, start: "18:00", end: "18:45", day: "default" },
+            { shift: Shift.Second, period: 6, start: "18:50", end: "19:35", day: "default" }
         ];
+        // КОНЕЦ: Новая функция [Специфичные звонки]
 
         const INITIAL_DATA = {
             subjects: [
@@ -240,6 +231,10 @@
                     if(!fixedData.bellSchedule) fixedData.bellSchedule = DEFAULT_BELLS;
                     // Ensure teachers have shifts array
                     fixedData.teachers = fixedData.teachers.map(t => ({ shifts: [Shift.First, Shift.Second], ...t }));
+                    // НАЧАЛО: Новая функция [Специфичные звонки] - миграция данных
+                    // Если звонки не имеют поля day, проставляем 'default'
+                    fixedData.bellSchedule = fixedData.bellSchedule.map(b => b.day ? b : { ...b, day: 'default' });
+                    // КОНЕЦ: Новая функция [Специфичные звонки]
                     setInternalData(fixedData); 
                     setIsLoading(false); 
                 }).catch(e => { console.error(e); setIsLoading(false); });
@@ -312,16 +307,37 @@
             </div>
         );
 
+        // НАЧАЛО: Новая функция [Красивый виджет + Логика дней]
         const StatusWidget = () => {
             const { data } = useData();
             const [status, setStatus] = useState("Загрузка...");
+            const [details, setDetails] = useState("");
+            const [progress, setProgress] = useState(0);
             const [color, setColor] = useState("bg-slate-500");
+            const [currentDayName, setCurrentDayName] = useState("");
 
             useEffect(() => {
                 const updateStatus = () => {
                     const now = new Date();
+                    const dayIndex = now.getDay(); // 0 = Sun, 1 = Mon
+                    // Map generic days to our constants. Sun = null
+                    const dayMap = [null, DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday];
+                    const todayName = dayMap[dayIndex];
+                    setCurrentDayName(todayName || "Выходной");
+
+                    if (!todayName) {
+                        setStatus("Сегодня выходной");
+                        setDetails("Уроков нет");
+                        setColor("bg-slate-400");
+                        setProgress(0);
+                        return;
+                    }
+
                     const minutesNow = now.getHours() * 60 + now.getMinutes();
-                    const bells = data.bellSchedule || [];
+                    
+                    // Logic to find applicable bells for today
+                    let dailyBells = data.bellSchedule.filter(b => b.day === todayName);
+                    if (dailyBells.length === 0) dailyBells = data.bellSchedule.filter(b => b.day === 'default');
                     
                     let activeLesson = null;
                     
@@ -330,22 +346,24 @@
                         return h * 60 + m;
                     };
 
-                    for (const bell of bells) {
+                    for (const bell of dailyBells) {
                         const start = timeToMin(bell.start);
                         const end = timeToMin(bell.end);
                         if (minutesNow >= start && minutesNow < end) {
-                            activeLesson = { ...bell, remaining: end - minutesNow };
+                            activeLesson = { ...bell, duration: end - start, passed: minutesNow - start };
                             break;
                         }
                     }
 
                     if (activeLesson) {
-                        setStatus(`${activeLesson.period} урок (${activeLesson.shift === Shift.First ? '1 см' : '2 см'}), ост. ${activeLesson.remaining} мин`);
-                        setColor("bg-emerald-500");
+                        setStatus(`${activeLesson.period} урок`);
+                        setDetails(`${activeLesson.shift === Shift.First ? '1 смена' : '2 смена'} • ост. ${activeLesson.duration - activeLesson.passed} мин`);
+                        setProgress((activeLesson.passed / activeLesson.duration) * 100);
+                        setColor("bg-indigo-600");
                     } else {
                         let minDiff = Infinity;
                         let next = null;
-                        for(const bell of bells) {
+                        for(const bell of dailyBells) {
                             const start = timeToMin(bell.start);
                             if(start > minutesNow && (start - minutesNow) < minDiff) {
                                 minDiff = start - minutesNow;
@@ -354,11 +372,15 @@
                         }
 
                         if (next && minDiff < 30) {
-                            setStatus(`Перемена, ${minDiff} мин до ${next.period} урока`);
+                            setStatus("Перемена");
+                            setDetails(`через ${minDiff} мин ${next.period} урок (${next.shift === Shift.First ? '1см' : '2см'})`);
                             setColor("bg-amber-500");
+                            setProgress(100 - (minDiff / 20 * 100)); // Rough estimate for break progress
                         } else {
                             setStatus("Уроков нет");
+                            setDetails("Свободное время");
                             setColor("bg-slate-400");
+                            setProgress(0);
                         }
                     }
                 };
@@ -369,12 +391,27 @@
             }, [data.bellSchedule]);
 
             return (
-                <div className="mx-4 mt-2 p-3 bg-slate-900 rounded-xl flex items-center gap-3 shadow-lg">
-                    <div className={`w-3 h-3 rounded-full ${color} animate-pulse shrink-0`}></div>
-                    <div className="text-xs font-bold text-white truncate">{status}</div>
+                <div className="mx-4 mt-auto mb-4 p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 flex flex-col gap-3 relative overflow-hidden group">
+                     <div className={`absolute top-0 left-0 w-1 h-full ${color}`}></div>
+                     <div className="flex justify-between items-start z-10">
+                        <div>
+                            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">{currentDayName}</div>
+                            <div className="text-lg font-black text-slate-800 dark:text-white leading-none mb-1">{status}</div>
+                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{details}</div>
+                        </div>
+                        <div className={`w-8 h-8 rounded-full ${color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center text-${color.replace('bg-', '')}`}>
+                             <Icon name="Clock" size={16} className={color.replace('bg-', 'text-')} />
+                        </div>
+                     </div>
+                     {progress > 0 && (
+                         <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mt-1">
+                             <div className={`h-full ${color} transition-all duration-1000`} style={{ width: `${progress}%` }}></div>
+                         </div>
+                     )}
                 </div>
             );
         };
+        // КОНЕЦ: Новая функция [Красивый виджет]
 
         // --- PAGES ---
 
@@ -638,6 +675,26 @@
             const [classForm, setClassForm] = useState({ shift: Shift.First });
             const [draggedIdx, setDraggedIdx] = useState(null);
 
+            // НАЧАЛО: Новая функция [Вкладки дней для звонков]
+            const [activeBellDay, setActiveBellDay] = useState('default'); // 'default' | 'Ср' | 'Чт'
+
+            const getActiveBells = (shift, period) => {
+                const dayKey = activeBellDay;
+                // Try to find a specific override for this day, otherwise fallback to default *if creating* but here we just want to find if it exists
+                let bell = data.bellSchedule.find(b => b.shift === shift && b.period === period && b.day === dayKey);
+                
+                // If we are in specific day mode and no override exists, show empty or placeholder? 
+                // Better UX: Show the default value as placeholder, but saving creates a new entry.
+                if (!bell && dayKey !== 'default') {
+                    // Try to find default to pre-fill visual
+                     const defaultBell = data.bellSchedule.find(b => b.shift === shift && b.period === period && b.day === 'default');
+                     return defaultBell ? { ...defaultBell, start: '', end: '', isInherited: true } : { start: '', end: '', isInherited: false };
+                }
+                
+                return bell || { start: '', end: '' };
+            };
+            // КОНЕЦ: Новая функция [Вкладки дней для звонков]
+
             const openModal = (id) => {
                 setEditingId(id || null);
                 if (activeTab === 'teachers') setTeacherForm(id ? data.teachers.find(x => x.id === id) : { subjectIds: [], unavailableDates: [], shifts: [Shift.First, Shift.Second] });
@@ -657,16 +714,25 @@
             const onDragOver = (e) => { e.preventDefault(); };
             const onDrop = async (e, index) => { if (draggedIdx === null || draggedIdx === index) return; let list = activeTab === 'teachers' ? [...data.teachers] : activeTab === 'subjects' ? [...data.subjects] : [...data.classes]; const item = list.splice(draggedIdx, 1)[0]; list.splice(index, 0, item); if (activeTab === 'teachers') await saveData({ ...data, teachers: list }); else if (activeTab === 'subjects') await saveData({ ...data, subjects: list }); else await saveData({ ...data, classes: list }); setDraggedIdx(null); };
 
+            // НАЧАЛО: Новая функция [Сохранение звонков с днями]
             const handleBellChange = async (shift, period, field, value) => {
                 let bells = [...data.bellSchedule];
-                const idx = bells.findIndex(b => b.shift === shift && b.period === period);
+                const dayKey = activeBellDay;
+                
+                const idx = bells.findIndex(b => b.shift === shift && b.period === period && b.day === dayKey);
+                
                 if (idx >= 0) {
                     bells[idx] = { ...bells[idx], [field]: value };
                 } else {
-                    bells.push({ shift, period, [field]: value, start: '00:00', end: '00:00' });
+                    // Create new entry for this specific day (or default)
+                    bells.push({ shift, period, [field]: value, start: '00:00', end: '00:00', day: dayKey });
                 }
+                
+                // Cleanup: If specific day bell is empty/invalid, maybe remove it? 
+                // For now, let's just save.
                 await saveData({ ...data, bellSchedule: bells });
             };
+            // КОНЕЦ: Новая функция [Сохранение звонков с днями]
 
             const toggleShift = (shift) => {
                 const currentShifts = teacherForm.shifts || [];
@@ -693,29 +759,44 @@
                         {activeTab === 'subjects' && (<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{data.subjects.map((s, i) => (<div key={s.id} draggable onDragStart={(e)=>onDragStart(e,i)} onDragOver={onDragOver} onDrop={(e)=>onDrop(e,i)} className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between group cursor-grab active:cursor-grabbing"><div className="flex items-center gap-3"><Icon name="GripVertical" className="text-slate-300 dark:text-slate-600" size={16}/><div className="w-8 h-8 rounded-full shadow-inner border border-black/5" style={{backgroundColor: s.color}}></div><div><div className="font-bold text-slate-700 dark:text-slate-200">{s.name}</div><div className="text-xs text-slate-400">Сложность: {s.difficulty}</div></div></div><div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openModal(s.id)} className="p-1.5 text-slate-400 hover:text-indigo-600"><Icon name="Edit2" size={16}/></button><button onClick={() => handleDelete(s.id)} className="p-1.5 text-slate-400 hover:text-red-600"><Icon name="Trash2" size={16}/></button></div></div>))}</div>)}
                         {activeTab === 'classes' && (<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">{data.classes.map((c, i) => (<div key={c.id} draggable onDragStart={(e)=>onDragStart(e,i)} onDragOver={onDragOver} onDrop={(e)=>onDrop(e,i)} className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center group hover:shadow-md transition-all relative cursor-grab active:cursor-grabbing"><div className="absolute left-2 top-2 text-slate-300 dark:text-slate-600"><Icon name="GripVertical" size={14}/></div><div className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-1">{c.name}</div><div className={`text-xs font-bold px-2 py-0.5 rounded-full inline-block ${c.shift === Shift.First ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>{c.shift === Shift.First ? 'I' : 'II'} смена</div><div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openModal(c.id)} className="p-1 text-slate-400 hover:text-indigo-600"><Icon name="Edit2" size={14}/></button><button onClick={() => handleDelete(c.id)} className="p-1 text-slate-400 hover:text-red-600"><Icon name="Trash2" size={14}/></button></div></div>))}</div>)}
                         {activeTab === 'bells' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {[Shift.First, Shift.Second].map(shift => (
-                                    <div key={shift} className="bg-white dark:bg-dark-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-                                        <div className={`p-4 font-bold text-lg text-white ${shift === Shift.First ? 'bg-indigo-600' : 'bg-purple-600'}`}>
-                                            {shift}
-                                        </div>
-                                        <div className="p-6 space-y-3">
-                                            {SHIFT_PERIODS[shift].map(period => {
-                                                const bell = data.bellSchedule.find(b => b.shift === shift && b.period === period) || { start: '', end: '' };
-                                                return (
-                                                    <div key={period} className="flex items-center gap-4 bg-slate-50 dark:bg-slate-700/50 p-2 rounded-xl">
-                                                        <div className="w-10 h-10 rounded-lg bg-white dark:bg-slate-600 flex items-center justify-center font-black text-slate-500 dark:text-slate-300 shadow-sm">{period}</div>
-                                                        <div className="flex-1 flex items-center gap-2">
-                                                            <input type="time" className="flex-1 border-none bg-transparent font-bold text-slate-800 dark:text-white text-center focus:ring-0" value={bell.start} onChange={e => handleBellChange(shift, period, 'start', e.target.value)} />
-                                                            <span className="text-slate-300">—</span>
-                                                            <input type="time" className="flex-1 border-none bg-transparent font-bold text-slate-800 dark:text-white text-center focus:ring-0" value={bell.end} onChange={e => handleBellChange(shift, period, 'end', e.target.value)} />
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                            <div className="flex flex-col gap-6">
+                                {/* НАЧАЛО: Новая функция [Переключатель дней] */}
+                                <div className="flex justify-center">
+                                    <div className="bg-slate-100 dark:bg-slate-700 p-1 rounded-xl flex gap-1">
+                                        <button onClick={() => setActiveBellDay('default')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeBellDay === 'default' ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>Стандартное</button>
+                                        <button onClick={() => setActiveBellDay('Ср')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeBellDay === 'Ср' ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>Среда</button>
+                                        <button onClick={() => setActiveBellDay('Чт')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeBellDay === 'Чт' ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>Четверг</button>
                                     </div>
-                                ))}
+                                </div>
+                                <div className="text-center text-xs text-slate-400 -mt-3">
+                                    {activeBellDay === 'default' ? 'Применяется ко всем дням, кроме Ср и Чт' : `Применяется только в ${activeBellDay === 'Ср' ? 'Среду' : 'Четверг'}`}
+                                </div>
+                                {/* КОНЕЦ: Новая функция [Переключатель дней] */}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {[Shift.First, Shift.Second].map(shift => (
+                                        <div key={shift} className="bg-white dark:bg-dark-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                            <div className={`p-4 font-bold text-lg text-white ${shift === Shift.First ? 'bg-indigo-600' : 'bg-purple-600'}`}>
+                                                {shift}
+                                            </div>
+                                            <div className="p-6 space-y-3">
+                                                {SHIFT_PERIODS[shift].map(period => {
+                                                    const bell = getActiveBells(shift, period);
+                                                    return (
+                                                        <div key={period} className={`flex items-center gap-4 p-2 rounded-xl transition-colors ${bell.isInherited ? 'bg-slate-50/50 dark:bg-slate-800/50 opacity-60' : 'bg-slate-50 dark:bg-slate-700/50'}`}>
+                                                            <div className="w-10 h-10 rounded-lg bg-white dark:bg-slate-600 flex items-center justify-center font-black text-slate-500 dark:text-slate-300 shadow-sm">{period}</div>
+                                                            <div className="flex-1 flex items-center gap-2">
+                                                                <input type="time" placeholder="--:--" className="flex-1 border-none bg-transparent font-bold text-slate-800 dark:text-white text-center focus:ring-0" value={bell.start} onChange={e => handleBellChange(shift, period, 'start', e.target.value)} />
+                                                                <span className="text-slate-300">—</span>
+                                                                <input type="time" placeholder="--:--" className="flex-1 border-none bg-transparent font-bold text-slate-800 dark:text-white text-center focus:ring-0" value={bell.end} onChange={e => handleBellChange(shift, period, 'end', e.target.value)} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -890,6 +971,11 @@
                 return DAYS[idx - 1];
             }, [selectedDate]);
 
+            // НАЧАЛО: Новая функция [Фильтрация уроков в поиске учителей]
+            // Раньше был массив [1..7], теперь динамический на основе смены
+            const periodsForShift = SHIFT_PERIODS[teacherShift];
+            // КОНЕЦ: Новая функция [Фильтрация уроков в поиске учителей]
+
             const freeTeachers = useMemo(() => {
                 if (!selectedDayOfWeek) return [];
                 return data.teachers.filter(teacher => {
@@ -959,9 +1045,11 @@
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Свободен после урока №</label>
                                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl w-fit">
-                                        {[1, 2, 3, 4, 5, 6, 7].map(num => (
+                                        {/* НАЧАЛО: Новая функция [Исправление массива уроков] */}
+                                        {periodsForShift.map(num => (
                                             <button key={num} onClick={() => setAfterPeriod(num)} className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${afterPeriod === num ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>{num}</button>
                                         ))}
+                                        {/* КОНЕЦ: Новая функция [Исправление массива уроков] */}
                                     </div>
                                 </div>
                             </div>
@@ -1121,11 +1209,11 @@
                         <div className="h-full flex flex-col">
                             <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-700">
                                 <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
-                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v5.0</p></div>
+                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v5.1</p></div>
                                 <button className="lg:hidden ml-auto text-slate-400" onClick={() => setIsMobileMenuOpen(false)}><Icon name="X" size={24} /></button>
                             </div>
                             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-                                <StatusWidget />
+                                {/* НАЧАЛО: Новая функция [Перемещение виджета вниз] - виджет удален отсюда и перемещен вниз */}
                                 {navItems.map((item) => (<NavLink key={item.to} to={item.to} onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${isActive ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 shadow-sm ring-1 ring-indigo-200 dark:ring-transparent' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'}`}><Icon name={item.icon} size={20} strokeWidth={2} />{item.label}</NavLink>))}
                                 <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
                                     <a href="#/public" target="_blank" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all">
@@ -1133,6 +1221,9 @@
                                     </a>
                                 </div>
                             </nav>
+                            {/* НАЧАЛО: Новая функция [Перемещение виджета вниз] */}
+                            <StatusWidget />
+                            {/* КОНЕЦ: Новая функция [Перемещение виджета вниз] */}
                             <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between"><button onClick={toggleTheme} className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition">{theme === 'light' ? <><Icon name="Moon" size={16}/> Темная тема</> : <><Icon name="Sun" size={16}/> Светлая тема</>}</button></div>
                         </div>
                     </aside>
