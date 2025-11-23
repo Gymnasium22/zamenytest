@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Гимназия: Управление v4.0</title>
+    <title>Гимназия: Управление v4.1</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gymnasium%20Manager%20Pro%22%2C%22short_name%22%3A%22Gymnasium%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%5D%7D' />
@@ -132,7 +132,8 @@
             AlertCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
             MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
             Printer: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>,
-            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
+            DoorOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 20v-6a2 2 0 0 1 2-2h1v1"/><path d="M13 12h1"/><path d="M5 20v-6a2 2 0 0 1 2-2h1v1"/><path d="M8 12h1"/><path d="M4 20v-8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8"/></svg>
         };
         
         const Icon = ({ name, size = 24, className = "", ...props }) => {
@@ -321,16 +322,13 @@
                     const minutesNow = now.getHours() * 60 + now.getMinutes();
                     const bells = data.bellSchedule || [];
                     
-                    // Simple check for any active lesson across shifts (assuming non-overlapping or just showing first match)
                     let activeLesson = null;
-                    let upcomingBreak = null;
                     
                     const timeToMin = (t) => {
                         const [h, m] = t.split(':').map(Number);
                         return h * 60 + m;
                     };
 
-                    // Check if inside a lesson
                     for (const bell of bells) {
                         const start = timeToMin(bell.start);
                         const end = timeToMin(bell.end);
@@ -344,9 +342,6 @@
                         setStatus(`${activeLesson.period} урок (${activeLesson.shift === Shift.First ? '1 см' : '2 см'}), ост. ${activeLesson.remaining} мин`);
                         setColor("bg-emerald-500");
                     } else {
-                        // Check if break (between lessons of same shift)
-                        // Simplified: Just "Break" or "Classes Over"
-                        // Find next lesson
                         let minDiff = Infinity;
                         let next = null;
                         for(const bell of bells) {
@@ -357,7 +352,7 @@
                             }
                         }
 
-                        if (next && minDiff < 30) { // If next lesson is within 30 mins, it's a break
+                        if (next && minDiff < 30) {
                             setStatus(`Перемена, ${minDiff} мин до ${next.period} урока`);
                             setColor("bg-amber-500");
                         } else {
@@ -448,7 +443,6 @@
             const contextActions = [];
             if (contextMenu.item) {
                 contextActions.push(
-                    // Removed Find Substitution as requested
                     { label: 'Копировать', icon: 'Copy', onClick: () => setClipboard(contextMenu.item) },
                     { label: 'Удалить', icon: 'Trash2', color: 'text-red-600', onClick: () => handleDeleteItem(contextMenu.item.id) }
                 );
@@ -863,11 +857,148 @@
 
         const AdminPage = () => {
             const { data } = useData();
+            const [activeTab, setActiveTab] = useState('teachers'); // 'teachers' | 'rooms'
             const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+            
+            // Teacher Search State
             const [afterPeriod, setAfterPeriod] = useState(4);
-            const selectedDayOfWeek = useMemo(() => { const idx = new Date(selectedDate).getDay(); return idx === 0 ? null : DAYS[idx - 1]; }, [selectedDate]);
-            const freeTeachers = useMemo(() => { if (!selectedDayOfWeek) return []; return data.teachers.filter(t => { if (t.unavailableDates.includes(selectedDate)) return false; return !data.schedule.some(s => s.teacherId === t.id && s.day === selectedDayOfWeek && s.period > afterPeriod); }).sort((a, b) => a.name.localeCompare(b.name)); }, [data, selectedDate, afterPeriod]);
-            return (<div className="max-w-5xl mx-auto w-full"><div className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-8"><h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-3"><Icon name="Search" className="text-indigo-600 dark:text-indigo-400" />Поиск свободных учителей</h1><div className="flex flex-wrap gap-8"><div><label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Дата</label><input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="border border-slate-200 dark:border-slate-600 p-3 rounded-xl font-bold outline-none focus:border-indigo-500 bg-transparent dark:text-white" /></div><div><label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Свободен после урока №</label><div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">{[1, 2, 3, 4, 5, 6, 7].map(num => <button key={num} onClick={() => setAfterPeriod(num)} className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${afterPeriod === num ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>{num}</button>)}</div></div></div></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{freeTeachers.map(t => (<div key={t.id} className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-md transition-all"><div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><Icon name="CheckCircle" size={24} /></div><div><div className="font-bold text-slate-800 dark:text-slate-200">{t.name}</div><div className="flex flex-wrap gap-1 mt-1">{t.subjectIds.slice(0, 2).map(sid => { const s = data.subjects.find(sub => sub.id === sid); return s ? <span key={sid} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{s.name}</span> : null })}</div></div></div>))}{freeTeachers.length === 0 && <div className="col-span-full py-12 text-center text-slate-400">Не найдено учителей, свободных после {afterPeriod} урока.</div>}</div></div>);
+            
+            // Room Search State
+            const [roomPeriod, setRoomPeriod] = useState(1);
+            const [roomShift, setRoomShift] = useState(Shift.First);
+
+            const selectedDayOfWeek = useMemo(() => {
+                const idx = new Date(selectedDate).getDay();
+                if (idx === 0) return null;
+                return DAYS[idx - 1];
+            }, [selectedDate]);
+
+            const freeTeachers = useMemo(() => {
+                if (!selectedDayOfWeek) return [];
+                return data.teachers.filter(teacher => {
+                    if (teacher.unavailableDates.includes(selectedDate)) return false;
+                    const hasLateLessons = data.schedule.some(s => 
+                        s.teacherId === teacher.id && 
+                        s.day === selectedDayOfWeek && 
+                        s.period > afterPeriod
+                    );
+                    return !hasLateLessons;
+                }).sort((a, b) => a.name.localeCompare(b.name));
+            }, [data, selectedDate, selectedDayOfWeek, afterPeriod]);
+
+            // Room Logic
+            const allKnownRooms = useMemo(() => {
+                const rooms = new Set();
+                data.schedule.forEach(s => {
+                    if(s.roomId && s.roomId.trim() !== "") rooms.add(s.roomId.trim());
+                });
+                return Array.from(rooms).sort();
+            }, [data.schedule]);
+
+            const freeRooms = useMemo(() => {
+                if (!selectedDayOfWeek) return [];
+                const occupiedRooms = new Set();
+                data.schedule.forEach(s => {
+                    if (s.day === selectedDayOfWeek && s.period === roomPeriod && s.shift === roomShift && s.roomId) {
+                        occupiedRooms.add(s.roomId.trim());
+                    }
+                });
+                return allKnownRooms.filter(r => !occupiedRooms.has(r));
+            }, [data.schedule, selectedDayOfWeek, roomPeriod, roomShift, allKnownRooms]);
+
+            return (
+                <div className="max-w-5xl mx-auto w-full">
+                    <div className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-8">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6">
+                            <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+                                <Icon name="Search" className="text-indigo-600 dark:text-indigo-400" />
+                                Поиск свободных ресурсов
+                            </h1>
+                             <div className="flex gap-2 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+                                <button onClick={() => setActiveTab('teachers')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'teachers' ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>Учителя</button>
+                                <button onClick={() => setActiveTab('rooms')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'rooms' ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>Кабинеты</button>
+                            </div>
+                        </div>
+
+                        {/* Common Date Picker */}
+                         <div className="mb-6">
+                             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Дата</label>
+                             <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="border border-slate-200 dark:border-slate-600 p-3 rounded-xl font-bold outline-none focus:border-indigo-500 bg-transparent dark:text-white w-full md:w-auto" />
+                         </div>
+                        
+                        {activeTab === 'teachers' && (
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Свободен после урока №</label>
+                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl w-fit">
+                                    {[1, 2, 3, 4, 5, 6, 7].map(num => (
+                                        <button key={num} onClick={() => setAfterPeriod(num)} className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${afterPeriod === num ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>{num}</button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'rooms' && (
+                            <div className="flex flex-wrap gap-6">
+                                 <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Смена</label>
+                                    <div className="flex gap-2 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+                                        <button onClick={() => setRoomShift(Shift.First)} className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${roomShift === Shift.First ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>1 смена</button>
+                                        <button onClick={() => setRoomShift(Shift.Second)} className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${roomShift === Shift.Second ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>2 смена</button>
+                                    </div>
+                                 </div>
+                                 <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Урок №</label>
+                                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl w-fit">
+                                        {SHIFT_PERIODS[roomShift].map(num => (
+                                            <button key={num} onClick={() => setRoomPeriod(num)} className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${roomPeriod === num ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>{num}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {activeTab === 'teachers' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {freeTeachers.map(t => (
+                                <div key={t.id} className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                                    <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                        <Icon name="CheckCircle" size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-slate-800 dark:text-slate-200">{t.name}</div>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {t.subjectIds.slice(0, 2).map(sid => {
+                                                const s = data.subjects.find(sub => sub.id === sid);
+                                                return s ? <span key={sid} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{s.name}</span> : null
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {freeTeachers.length === 0 && <div className="col-span-full py-12 text-center text-slate-400">Не найдено учителей, свободных после {afterPeriod} урока.</div>}
+                        </div>
+                    )}
+
+                     {activeTab === 'rooms' && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {freeRooms.map(room => (
+                                <div key={room} className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center flex flex-col items-center justify-center hover:border-indigo-500 transition-all">
+                                    <Icon name="DoorOpen" size={24} className="text-emerald-500 mb-2"/>
+                                    <div className="text-xl font-black text-slate-800 dark:text-white">{room}</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Свободен</div>
+                                </div>
+                            ))}
+                            {freeRooms.length === 0 && (
+                                <div className="col-span-full py-12 text-center text-slate-400">
+                                    <Icon name="AlertTriangle" size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600"/>
+                                    <p>Нет свободных кабинетов в это время (или расписание не заполнено).</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
         };
 
         const ExportPage = () => {
@@ -905,7 +1036,7 @@
                         <div className="h-full flex flex-col">
                             <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-700">
                                 <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
-                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v4.0</p></div>
+                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v4.1</p></div>
                                 <button className="lg:hidden ml-auto text-slate-400" onClick={() => setIsMobileMenuOpen(false)}><Icon name="X" size={24} /></button>
                             </div>
                             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
