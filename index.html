@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Гимназия: Управление v3.2</title>
+    <title>Гимназия: Управление v3.4</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gymnasium%20Manager%20Pro%22%2C%22short_name%22%3A%22Gymnasium%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%5D%7D' />
@@ -32,12 +32,17 @@
       }
     </script>
 
-    <!-- DEPENDENCIES -->
+    <!-- DEPENDENCIES (UMD) -->
+    <!-- React 18 -->
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- React Router v6.3.0 Dependencies -->
     <script crossorigin src="https://unpkg.com/history@5.3.0/umd/history.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-router@6.3.0/umd/react-router.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.production.min.js"></script>
+    
+    <!-- Utils -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
@@ -54,20 +59,24 @@
       .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
       /* Context Menu Animation */
       .context-menu { animation: fadeIn 0.1s ease-out forwards; }
+      
       @media print {
+        @page { margin: 0.5cm; }
         .no-print { display: none !important; }
-        body { background: white; color: black; }
-        .print-container { display: block !important; }
+        body { background: white; color: black; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .print-container { display: block !important; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: white; }
+        .dark { background-color: white !important; color: black !important; }
+        .dark * { background-color: white !important; color: black !important; border-color: #e2e8f0 !important; }
       }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6"
   }
 }
 </script>
@@ -77,6 +86,8 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, createContext, useContext } = React;
+        
+        // Robustly access React Router DOM
         const RRDOM = window.ReactRouterDOM;
         const { HashRouter, Routes, Route, Navigate, Outlet, NavLink, useNavigate, useLocation } = RRDOM;
 
@@ -115,7 +126,12 @@
             TrendingUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
             Clipboard: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>,
             Share2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
-            Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            MapPin: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+            AlertCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+            MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
+            Printer: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         };
         
         const Icon = ({ name, size = 24, className = "", ...props }) => {
@@ -221,7 +237,7 @@
         const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in no-print">
                     <div className={`bg-white dark:bg-dark-800 rounded-2xl shadow-2xl w-full ${maxWidth} flex flex-col max-h-[90vh] transition-colors duration-300`}>
                         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700">
                             <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">{title}</h2>
@@ -248,7 +264,7 @@
              if (window.innerWidth - x < 200) style.left = x - 200;
 
              return (
-                 <div className="fixed z-[100] bg-white dark:bg-slate-800 shadow-xl rounded-xl border border-slate-100 dark:border-slate-700 py-2 w-56 context-menu" style={style}>
+                 <div className="fixed z-[100] bg-white dark:bg-slate-800 shadow-xl rounded-xl border border-slate-100 dark:border-slate-700 py-2 w-56 context-menu no-print" style={style}>
                      {actions.map((action, i) => (
                          <button key={i} onClick={(e) => { e.stopPropagation(); action.onClick(); onClose(); }} className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${action.color || 'text-slate-700 dark:text-slate-200'}`}>
                              {action.icon && <Icon name={action.icon} size={16}/>}
@@ -284,6 +300,9 @@
             const [tempItem, setTempItem] = useState({});
             const [viewMode, setViewMode] = useState('class');
             const [filterId, setFilterId] = useState('');
+            
+            // Print Modal
+            const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
             
             const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, item: null, cell: null });
             const [clipboard, setClipboard] = useState(null);
@@ -328,7 +347,6 @@
                 setIsEditorOpen(false);
             };
 
-            // CRITICAL FIX: Added stopPropagation to prevent bubbling to cell
             const handleContextMenu = (e, item, cellInfo) => {
                 if(readOnly) return;
                 e.preventDefault();
@@ -348,7 +366,6 @@
                     contextActions.push({ label: 'Вставить', icon: 'Clipboard', onClick: async () => {
                          const newItem = { ...clipboard, id: Math.random().toString(36).substr(2, 9), day: selectedDay, shift: selectedShift, period: contextMenu.cell.period };
                          if(viewMode === 'class') newItem.classId = contextMenu.cell.rowId;
-                         // Basic logic for other modes can be added here if needed
                          let newSchedule = [...data.schedule, newItem];
                          await saveData({ ...data, schedule: newSchedule });
                          setClipboard(null);
@@ -360,10 +377,15 @@
             const recommendedTeachers = tempItem.subjectId ? data.teachers.filter(t => t.subjectIds.includes(tempItem.subjectId)) : [];
             const otherTeachers = tempItem.subjectId ? data.teachers.filter(t => !t.subjectIds.includes(tempItem.subjectId)) : data.teachers;
 
+            // Printing Data Preparation
+            const printTitle = viewMode === 'teacher' && filterId ? data.teachers.find(t=>t.id===filterId)?.name 
+                             : viewMode === 'class' && filterId ? data.classes.find(c=>c.id===filterId)?.name 
+                             : 'Расписание';
+            
             return (
                 <div className="h-full flex flex-col">
                     {contextMenu.visible && <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={()=>setContextMenu({...contextMenu, visible:false})} actions={contextActions} />}
-                    <div className="bg-white dark:bg-dark-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
+                    <div className="bg-white dark:bg-dark-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between no-print">
                          <div className="flex gap-4 items-center flex-wrap">
                             <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
                                 <button onClick={() => setSelectedShift(Shift.First)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${selectedShift === Shift.First ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>1 смена</button>
@@ -389,10 +411,15 @@
                                     {viewMode === 'subject' && data.subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                             </div>
+                            {filterId && (viewMode === 'class' || viewMode === 'teacher') && (
+                                <button onClick={() => setIsPrintModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all">
+                                    <Icon name="Printer" size={16}/> Неделя
+                                </button>
+                            )}
                         </div>
                     </div>
 
-                    <div className="flex-1 bg-white dark:bg-dark-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col transition-colors duration-300">
+                    <div className="flex-1 bg-white dark:bg-dark-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col transition-colors duration-300 no-print">
                         <div className="overflow-auto flex-1 custom-scrollbar">
                             <table className="w-full border-collapse min-w-[1000px]">
                                 <thead className="bg-slate-50 dark:bg-slate-700 sticky top-0 z-20">
@@ -422,11 +449,13 @@
                                                                             {item.direction && <span className="text-[9px] px-1 rounded bg-white/80 dark:bg-black/30 font-bold text-slate-600 dark:text-slate-300">{item.direction}</span>}
                                                                         </div>
                                                                         <div className="flex justify-between items-center mt-auto">
-                                                                            <div className="text-slate-600 dark:text-slate-400 text-[10px] flex items-center gap-1 truncate">
-                                                                                <Icon name={viewMode === 'teacher' ? 'GraduationCap' : 'User'} size={10} /> 
-                                                                                {viewMode === 'teacher' ? cls?.name : viewMode === 'class' ? teacher?.name.split(' ')[0] : teacher?.name.split(' ')[0]}
+                                                                            <div className="text-slate-600 dark:text-slate-400 text-[10px] flex items-center gap-1 leading-tight overflow-hidden" title={teacher?.name}>
+                                                                                <Icon name={viewMode === 'teacher' ? 'GraduationCap' : 'User'} size={10} className="shrink-0" /> 
+                                                                                <span className="truncate">
+                                                                                    {viewMode === 'teacher' ? cls?.name : viewMode === 'class' ? teacher?.name : teacher?.name}
+                                                                                </span>
                                                                             </div>
-                                                                            {item.roomId && <div className="text-[9px] font-mono text-slate-400 bg-white/50 dark:bg-black/20 rounded px-1 flex items-center gap-0.5">{item.roomId}</div>}
+                                                                            {item.roomId && <div className="text-[9px] font-mono text-slate-400 bg-white/50 dark:bg-black/20 rounded px-1 flex items-center gap-0.5 shrink-0">{item.roomId}</div>}
                                                                         </div>
                                                                         {conflict && <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">!</div>}
                                                                     </div>
@@ -454,12 +483,72 @@
                              <div className="flex justify-between pt-4 border-t border-slate-100 dark:border-slate-700">{tempItem.id && data.schedule.find(s => s.id === tempItem.id) && <button onClick={() => handleDeleteItem(tempItem.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors"><Icon name="Trash2" size={16}/> Удалить</button>}<button onClick={handleSaveItem} className="ml-auto px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-bold shadow-lg shadow-indigo-200 dark:shadow-none">Сохранить</button></div>
                         </div>
                     </Modal>}
+
+                     {/* PRINT MODAL (Weekly View) */}
+                    {isPrintModalOpen && (
+                        <div className="fixed inset-0 bg-white z-[9999] overflow-auto flex flex-col print-container">
+                            <div className="p-6 border-b border-gray-200 flex justify-between items-center no-print bg-gray-50">
+                                <h1 className="text-2xl font-bold">Недельное расписание: {printTitle}</h1>
+                                <div className="flex gap-4">
+                                    <button onClick={() => window.print()} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-indigo-700">
+                                        <Icon name="Printer" size={20} /> Печать
+                                    </button>
+                                    <button onClick={() => setIsPrintModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-300">
+                                        Закрыть
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-8">
+                                <div className="mb-6 text-center">
+                                    <h2 className="text-3xl font-black uppercase mb-1">{printTitle}</h2>
+                                    <p className="text-gray-500 font-bold uppercase tracking-widest">Расписание занятий</p>
+                                </div>
+                                <table className="w-full border-collapse border border-black text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th className="border border-black p-2 bg-gray-100 w-16">Урок</th>
+                                            {DAYS.map(day => <th key={day} className="border border-black p-2 bg-gray-100 text-center uppercase">{day}</th>)}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[1,2,3,4,5,6,7].map(period => (
+                                            <tr key={period}>
+                                                <td className="border border-black p-2 text-center font-bold bg-gray-50">{period}</td>
+                                                {DAYS.map(day => {
+                                                    const items = filterId 
+                                                        ? data.schedule.filter(s => s.day === day && s.period === period && (viewMode === 'teacher' ? s.teacherId === filterId : s.classId === filterId))
+                                                        : [];
+                                                    return (
+                                                        <td key={day} className="border border-black p-2 align-top h-20">
+                                                            {items.map(item => {
+                                                                const s = data.subjects.find(x=>x.id===item.subjectId);
+                                                                const c = data.classes.find(x=>x.id===item.classId);
+                                                                const t = data.teachers.find(x=>x.id===item.teacherId);
+                                                                return (
+                                                                    <div key={item.id} className="mb-1 text-xs">
+                                                                        <div className="font-bold">{s?.name} {item.direction ? `(${item.direction})` : ''}</div>
+                                                                        <div className="text-gray-600">{viewMode === 'teacher' ? c?.name : t?.name}</div>
+                                                                        {item.roomId && <div className="text-gray-400 italic">Каб. {item.roomId}</div>}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <div className="mt-8 pt-4 border-t border-gray-300 flex justify-between text-xs text-gray-500">
+                                    <div>Сформировано автоматически</div>
+                                    <div>{new Date().toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
-
-        // ... DirectoryPage, SubstitutionsPage, AdminPage, ReportsPage, ExportPage ... 
-        // (These components are identical to previous versions, kept for completeness in the single file structure)
 
         const DirectoryPage = () => {
             const { data, saveData } = useData();
@@ -530,6 +619,17 @@
             useEffect(() => {
                 if(location.state?.subParams) {
                     setCurrentSubParams(location.state.subParams);
+                    const item = data.schedule.find(s => s.id === location.state.subParams.scheduleItemId);
+                    if (item) {
+                        const targetDayIndex = DAYS.indexOf(item.day) + 1; 
+                        const today = new Date();
+                        const currentDayIndex = today.getDay() || 7;
+                        let diff = targetDayIndex - currentDayIndex;
+                        if (diff < 0) diff += 7;
+                        const nextDate = new Date(today);
+                        nextDate.setDate(today.getDate() + diff);
+                        setSelectedDate(nextDate.toISOString().split('T')[0]);
+                    }
                     setIsModalOpen(true);
                     window.history.replaceState({}, document.title);
                 }
@@ -546,6 +646,17 @@
             const removeSubstitution = async (id) => { const newSubs = data.substitutions.filter(s => !(s.scheduleItemId === id && s.date === selectedDate)); await saveData({ ...data, substitutions: newSubs }); };
             const copyForMessenger = () => { let text = `*Замены на ${new Date(selectedDate).toLocaleDateString('ru-RU')}*\n\n`; if(affectedLessons.length === 0) text += "Замен нет."; affectedLessons.forEach(l => { const sub = data.substitutions.find(s => s.scheduleItemId === l.id && s.date === selectedDate); const cls = data.classes.find(c => c.id === l.classId); const subj = data.subjects.find(s => s.id === l.subjectId); const rep = sub ? data.teachers.find(t => t.id === sub.replacementTeacherId) : null; const orig = data.teachers.find(t => t.id === l.teacherId); if (rep) text += `✅ ${cls.name} (${l.period} ур): ${subj.name} -> ${rep.name} (вместо ${orig.name})\n`; else text += `❗ ${cls.name} (${l.period} ур): ${subj.name} (${orig.name}) -> НЕТ ЗАМЕНЫ\n`; }); navigator.clipboard.writeText(text); alert("Текст скопирован!"); };
             const candidates = useMemo(() => { if (!currentSubParams || !selectedDayOfWeek) return []; return data.teachers.map(t => { const isAbsent = t.unavailableDates.includes(selectedDate); const isBusy = data.schedule.some(s => s.teacherId === t.id && s.day === selectedDayOfWeek && s.period === currentSubParams.period && s.shift === currentSubParams.shift); const isSpecialist = t.subjectIds.includes(currentSubParams.subjectId); let score = 0; if (isAbsent) score -= 1000; if (isBusy) score -= 100; if (isSpecialist) score += 50; return { teacher: t, isAbsent, isBusy, isSpecialist, score }; }).sort((a, b) => b.score - a.score); }, [data, currentSubParams, selectedDate]);
+            
+            // Get context for substitution modal
+            const modalContext = useMemo(() => {
+                if(!currentSubParams) return null;
+                const s = data.schedule.find(i => i.id === currentSubParams.scheduleItemId);
+                if(!s) return null;
+                const c = data.classes.find(cls => cls.id === s.classId);
+                const sub = data.subjects.find(subj => subj.id === s.subjectId);
+                const t = data.teachers.find(tch => tch.id === s.teacherId);
+                return { className: c?.name, subjectName: sub?.name, teacherName: t?.name, period: s.period };
+            }, [currentSubParams, data]);
 
             return (
                 <div className="h-full flex flex-col md:flex-row gap-6">
@@ -575,7 +686,31 @@
                             })}
                         </div>
                     </div>
-                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Выбор замены"><div className="space-y-2">{candidates.map(({ teacher, isAbsent, isBusy, isSpecialist }) => (<button key={teacher.id} disabled={isAbsent || isBusy} onClick={() => assignSubstitution(teacher.id)} className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all text-left ${isAbsent ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900 opacity-60' : isBusy ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900 opacity-60' : 'bg-white dark:bg-dark-800 border-slate-100 dark:border-slate-700 hover:border-indigo-500 hover:shadow-md'}`}><div className="flex items-center gap-3"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isSpecialist ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>{isSpecialist ? <Icon name="Star" size={14} fill="currentColor"/> : teacher.name[0]}</div><div><div className="font-bold text-sm text-slate-800 dark:text-slate-200">{teacher.name}</div><div className="text-xs text-slate-500 dark:text-slate-400">{isSpecialist && <span className="text-emerald-600 dark:text-emerald-400 mr-2">Профиль</span>}{isBusy && <span className="text-orange-600 dark:text-orange-400">Занят</span>}{isAbsent && <span className="text-red-600 dark:text-red-400">Отсутствует</span>}</div></div></div>{!isAbsent && !isBusy && <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded text-xs font-bold">Выбрать</div>}</button>))}</div></Modal>
+                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Выбор замены">
+                        {modalContext && (
+                            <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl mb-4 text-sm border border-slate-100 dark:border-slate-600">
+                                <div className="font-bold text-slate-700 dark:text-slate-200 mb-1">{modalContext.className} • {modalContext.period} урок</div>
+                                <div className="flex justify-between text-slate-500 dark:text-slate-400">
+                                    <span>{modalContext.subjectName}</span>
+                                    <span className="line-through decoration-red-400">{modalContext.teacherName}</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="space-y-2">
+                            {candidates.map(({ teacher, isAbsent, isBusy, isSpecialist }) => (
+                                <button key={teacher.id} disabled={isAbsent || isBusy} onClick={() => assignSubstitution(teacher.id)} className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all text-left ${isAbsent ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900 opacity-60' : isBusy ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900 opacity-60' : 'bg-white dark:bg-dark-800 border-slate-100 dark:border-slate-700 hover:border-indigo-500 hover:shadow-md'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isSpecialist ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>{isSpecialist ? <Icon name="Star" size={14} fill="currentColor"/> : teacher.name[0]}</div>
+                                        <div>
+                                            <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{teacher.name}</div>
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">{isSpecialist && <span className="text-emerald-600 dark:text-emerald-400 mr-2">Профиль</span>}{isBusy && <span className="text-orange-600 dark:text-orange-400">Занят</span>}{isAbsent && <span className="text-red-600 dark:text-red-400">Отсутствует</span>}</div>
+                                        </div>
+                                    </div>
+                                    {!isAbsent && !isBusy && <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded text-xs font-bold">Выбрать</div>}
+                                </button>
+                            ))}
+                        </div>
+                    </Modal>
                     <Modal isOpen={absenceModalOpen} onClose={() => setAbsenceModalOpen(false)} title="Причина отсутствия"><div className="space-y-4"><select value={absenceReason} onChange={e => setAbsenceReason(e.target.value)} className="w-full border p-3 rounded-xl outline-none font-bold text-slate-700 dark:text-white dark:bg-slate-700 dark:border-slate-600"><option>Болезнь</option><option>Курсы</option><option>Отгул</option><option>Семейные обстоятельства</option><option>Командировка</option></select><div className="flex justify-end"><button onClick={confirmAbsence} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold">Подтвердить</button></div></div></Modal>
                 </div>
             );
@@ -641,11 +776,11 @@
             return (
                 <div className="flex h-screen bg-slate-50 dark:bg-dark-950 overflow-hidden transition-colors duration-300">
                     {isMobileMenuOpen && <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}/>}
-                    <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-800 border-r border-slate-200 dark:border-slate-700 transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                    <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-800 border-r border-slate-200 dark:border-slate-700 transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} no-print`}>
                         <div className="h-full flex flex-col">
                             <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-700">
                                 <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
-                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v3.2</p></div>
+                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v3.4</p></div>
                                 <button className="lg:hidden ml-auto text-slate-400" onClick={() => setIsMobileMenuOpen(false)}><Icon name="X" size={24} /></button>
                             </div>
                             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -660,7 +795,7 @@
                         </div>
                     </aside>
                     <main className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-dark-950">
-                        <header className="bg-white/80 dark:bg-dark-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 lg:hidden sticky top-0 z-30 px-4 py-3 flex items-center justify-between"><div className="flex items-center gap-3"><button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"><Icon name="Menu" size={24} /></button><span className="font-bold text-slate-800 dark:text-white">Меню</span></div></header>
+                        <header className="bg-white/80 dark:bg-dark-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 lg:hidden sticky top-0 z-30 px-4 py-3 flex items-center justify-between no-print"><div className="flex items-center gap-3"><button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"><Icon name="Menu" size={24} /></button><span className="font-bold text-slate-800 dark:text-white">Меню</span></div></header>
                         <div className="flex-1 overflow-auto p-4 lg:p-8"><Outlet /></div>
                     </main>
                 </div>
@@ -670,7 +805,7 @@
         const PublicLayout = () => {
             return (
                 <div className="min-h-screen bg-slate-50 dark:bg-dark-950 flex flex-col">
-                    <header className="bg-white dark:bg-dark-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+                    <header className="bg-white dark:bg-dark-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between sticky top-0 z-50 no-print">
                         <div className="flex items-center gap-3">
                             <div className="bg-indigo-600 p-2 rounded-lg text-white"><Icon name="GraduationCap" size={24}/></div>
                             <div><h1 className="font-black text-slate-800 dark:text-white text-lg leading-none">Гимназия</h1><p className="text-xs font-bold text-slate-400 uppercase">Публичное расписание</p></div>
