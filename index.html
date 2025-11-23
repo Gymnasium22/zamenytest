@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Гимназия: Управление v3.4</title>
+    <title>Гимназия: Управление v3.5</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gymnasium%20Manager%20Pro%22%2C%22short_name%22%3A%22Gymnasium%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%5D%7D' />
@@ -37,7 +36,7 @@
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
     
-    <!-- React Router v6.3.0 Dependencies -->
+    <!-- React Router v6.3.0 -->
     <script crossorigin src="https://unpkg.com/history@5.3.0/umd/history.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-router@6.3.0/umd/react-router.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.production.min.js"></script>
@@ -72,11 +71,11 @@
 <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6"
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
   }
 }
 </script>
@@ -780,7 +779,7 @@
                         <div className="h-full flex flex-col">
                             <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-700">
                                 <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
-                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v3.4</p></div>
+                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v3.5</p></div>
                                 <button className="lg:hidden ml-auto text-slate-400" onClick={() => setIsMobileMenuOpen(false)}><Icon name="X" size={24} /></button>
                             </div>
                             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
