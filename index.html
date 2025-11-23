@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Гимназия: Управление v4.1</title>
+    <title>Гимназия: Управление v5.0</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gymnasium%20Manager%20Pro%22%2C%22short_name%22%3A%22Gymnasium%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234f46e5%22%2C%22icons%22%3A%5B%5D%7D' />
@@ -133,7 +133,8 @@
             MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
             Printer: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>,
             Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
-            DoorOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 20v-6a2 2 0 0 1 2-2h1v1"/><path d="M13 12h1"/><path d="M5 20v-6a2 2 0 0 1 2-2h1v1"/><path d="M8 12h1"/><path d="M4 20v-8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8"/></svg>
+            DoorOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 20v-6a2 2 0 0 1 2-2h1v1"/><path d="M13 12h1"/><path d="M5 20v-6a2 2 0 0 1 2-2h1v1"/><path d="M8 12h1"/><path d="M4 20v-8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8"/></svg>,
+            SunMoon: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
         };
         
         const Icon = ({ name, size = 24, className = "", ...props }) => {
@@ -148,7 +149,6 @@
         const DAYS = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday];
         const SHIFT_PERIODS = { [Shift.First]: [1, 2, 3, 4, 5, 6, 7], [Shift.Second]: [0, 1, 2, 3, 4, 5, 6] };
         
-        // Default Bell Schedule (Approximate)
         const DEFAULT_BELLS = [
             { shift: Shift.First, period: 1, start: "08:00", end: "08:45" },
             { shift: Shift.First, period: 2, start: "08:55", end: "09:40" },
@@ -176,8 +176,8 @@
                 { id: 's6', name: 'Информатика', color: '#cffafe', difficulty: 9 },
             ],
             teachers: [
-                { id: 't1', name: 'Иванова Анна Сергеевна', subjectIds: ['s1', 's4'], unavailableDates: [], absenceReasons: {} },
-                { id: 't2', name: 'Петров Борис Михайлович', subjectIds: ['s2', 's3'], unavailableDates: [], absenceReasons: {} },
+                { id: 't1', name: 'Иванова Анна Сергеевна', subjectIds: ['s1', 's4'], unavailableDates: [], absenceReasons: {}, shifts: [Shift.First, Shift.Second] },
+                { id: 't2', name: 'Петров Борис Михайлович', subjectIds: ['s2', 's3'], unavailableDates: [], absenceReasons: {}, shifts: [Shift.First] },
             ],
             classes: [
                 { id: 'c1', name: '5А', shift: Shift.First },
@@ -238,7 +238,8 @@
                 dbService.load().then((loaded) => { 
                     const fixedData = { ...INITIAL_DATA, ...loaded };
                     if(!fixedData.bellSchedule) fixedData.bellSchedule = DEFAULT_BELLS;
-                    fixedData.subjects = fixedData.subjects.map(s => ({ difficulty: 5, ...s }));
+                    // Ensure teachers have shifts array
+                    fixedData.teachers = fixedData.teachers.map(t => ({ shifts: [Shift.First, Shift.Second], ...t }));
                     setInternalData(fixedData); 
                     setIsLoading(false); 
                 }).catch(e => { console.error(e); setIsLoading(false); });
@@ -386,10 +387,7 @@
             const [tempItem, setTempItem] = useState({});
             const [viewMode, setViewMode] = useState('class');
             const [filterId, setFilterId] = useState('');
-            
-            // Print Modal
             const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-            
             const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, item: null, cell: null });
             const [clipboard, setClipboard] = useState(null);
 
@@ -462,7 +460,6 @@
             const recommendedTeachers = tempItem.subjectId ? data.teachers.filter(t => t.subjectIds.includes(tempItem.subjectId)) : [];
             const otherTeachers = tempItem.subjectId ? data.teachers.filter(t => !t.subjectIds.includes(tempItem.subjectId)) : data.teachers;
 
-            // Printing Data Preparation
             const printTitle = viewMode === 'teacher' && filterId ? data.teachers.find(t=>t.id===filterId)?.name 
                              : viewMode === 'class' && filterId ? data.classes.find(c=>c.id===filterId)?.name 
                              : 'Расписание';
@@ -569,7 +566,7 @@
                         </div>
                     </Modal>}
 
-                     {/* PRINT MODAL (Weekly View) */}
+                     {/* PRINT MODAL */}
                     {isPrintModalOpen && (
                         <div className="fixed inset-0 bg-white z-[9999] overflow-auto flex flex-col print-container">
                             <div className="p-6 border-b border-gray-200 flex justify-between items-center no-print bg-gray-50">
@@ -624,10 +621,6 @@
                                         ))}
                                     </tbody>
                                 </table>
-                                <div className="mt-8 pt-4 border-t border-gray-300 flex justify-between text-xs text-gray-500">
-                                    <div>Сформировано автоматически</div>
-                                    <div>{new Date().toLocaleDateString()}</div>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -640,14 +633,14 @@
             const [activeTab, setActiveTab] = useState('teachers');
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [editingId, setEditingId] = useState(null);
-            const [teacherForm, setTeacherForm] = useState({ subjectIds: [] });
+            const [teacherForm, setTeacherForm] = useState({ subjectIds: [], shifts: [Shift.First, Shift.Second] });
             const [subjectForm, setSubjectForm] = useState({ color: '#e0e7ff', difficulty: 5 });
             const [classForm, setClassForm] = useState({ shift: Shift.First });
             const [draggedIdx, setDraggedIdx] = useState(null);
 
             const openModal = (id) => {
                 setEditingId(id || null);
-                if (activeTab === 'teachers') setTeacherForm(id ? data.teachers.find(x => x.id === id) : { subjectIds: [], unavailableDates: [] });
+                if (activeTab === 'teachers') setTeacherForm(id ? data.teachers.find(x => x.id === id) : { subjectIds: [], unavailableDates: [], shifts: [Shift.First, Shift.Second] });
                 else if (activeTab === 'subjects') setSubjectForm(id ? data.subjects.find(x => x.id === id) : { color: '#e0e7ff', difficulty: 5 });
                 else setClassForm(id ? data.classes.find(x => x.id === id) : { shift: Shift.First });
                 setIsModalOpen(true);
@@ -675,6 +668,15 @@
                 await saveData({ ...data, bellSchedule: bells });
             };
 
+            const toggleShift = (shift) => {
+                const currentShifts = teacherForm.shifts || [];
+                if (currentShifts.includes(shift)) {
+                    setTeacherForm({ ...teacherForm, shifts: currentShifts.filter(s => s !== shift) });
+                } else {
+                    setTeacherForm({ ...teacherForm, shifts: [...currentShifts, shift] });
+                }
+            };
+
             return (
                 <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-8 shrink-0">
@@ -687,23 +689,27 @@
                         {activeTab !== 'bells' && <button onClick={() => openModal()} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none font-semibold"><Icon name="Plus" size={20} /> Добавить</button>}
                     </div>
                     <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar pr-2">
-                        {activeTab === 'teachers' && (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{data.teachers.map((t, i) => (<div key={t.id} draggable onDragStart={(e)=>onDragStart(e,i)} onDragOver={onDragOver} onDrop={(e)=>onDrop(e,i)} className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group flex flex-col cursor-grab active:cursor-grabbing"><div className="flex justify-between items-start mb-2"><div className="flex items-center gap-3"><Icon name="GripVertical" className="text-slate-300 dark:text-slate-600" size={16}/><div className="font-bold text-slate-800 dark:text-slate-100 text-lg">{t.name}</div></div><div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openModal(t.id)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-700 rounded-full"><Icon name="Edit2" size={16}/></button><button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-700 rounded-full"><Icon name="Trash2" size={16}/></button></div></div><div className="flex flex-wrap gap-1 mt-auto pl-7">{t.subjectIds.map(sid => { const s = data.subjects.find(sub => sub.id === sid); return s ? <span key={sid} className="text-xs px-2 py-1 rounded-md font-medium" style={{backgroundColor: s.color, color: '#334155'}}>{s.name}</span> : null })}</div></div>))}</div>)}
+                        {activeTab === 'teachers' && (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{data.teachers.map((t, i) => (<div key={t.id} draggable onDragStart={(e)=>onDragStart(e,i)} onDragOver={onDragOver} onDrop={(e)=>onDrop(e,i)} className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group flex flex-col cursor-grab active:cursor-grabbing"><div className="flex justify-between items-start mb-2"><div className="flex items-center gap-3"><Icon name="GripVertical" className="text-slate-300 dark:text-slate-600" size={16}/><div className="font-bold text-slate-800 dark:text-slate-100 text-lg">{t.name}</div></div><div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openModal(t.id)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-700 rounded-full"><Icon name="Edit2" size={16}/></button><button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-700 rounded-full"><Icon name="Trash2" size={16}/></button></div></div><div className="flex gap-2 mb-3">{t.shifts?.includes(Shift.First) && <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold">1 см</span>}{t.shifts?.includes(Shift.Second) && <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold">2 см</span>}</div><div className="flex flex-wrap gap-1 mt-auto pl-7">{t.subjectIds.map(sid => { const s = data.subjects.find(sub => sub.id === sid); return s ? <span key={sid} className="text-xs px-2 py-1 rounded-md font-medium" style={{backgroundColor: s.color, color: '#334155'}}>{s.name}</span> : null })}</div></div>))}</div>)}
                         {activeTab === 'subjects' && (<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{data.subjects.map((s, i) => (<div key={s.id} draggable onDragStart={(e)=>onDragStart(e,i)} onDragOver={onDragOver} onDrop={(e)=>onDrop(e,i)} className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between group cursor-grab active:cursor-grabbing"><div className="flex items-center gap-3"><Icon name="GripVertical" className="text-slate-300 dark:text-slate-600" size={16}/><div className="w-8 h-8 rounded-full shadow-inner border border-black/5" style={{backgroundColor: s.color}}></div><div><div className="font-bold text-slate-700 dark:text-slate-200">{s.name}</div><div className="text-xs text-slate-400">Сложность: {s.difficulty}</div></div></div><div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openModal(s.id)} className="p-1.5 text-slate-400 hover:text-indigo-600"><Icon name="Edit2" size={16}/></button><button onClick={() => handleDelete(s.id)} className="p-1.5 text-slate-400 hover:text-red-600"><Icon name="Trash2" size={16}/></button></div></div>))}</div>)}
                         {activeTab === 'classes' && (<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">{data.classes.map((c, i) => (<div key={c.id} draggable onDragStart={(e)=>onDragStart(e,i)} onDragOver={onDragOver} onDrop={(e)=>onDrop(e,i)} className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-center group hover:shadow-md transition-all relative cursor-grab active:cursor-grabbing"><div className="absolute left-2 top-2 text-slate-300 dark:text-slate-600"><Icon name="GripVertical" size={14}/></div><div className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-1">{c.name}</div><div className={`text-xs font-bold px-2 py-0.5 rounded-full inline-block ${c.shift === Shift.First ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>{c.shift === Shift.First ? 'I' : 'II'} смена</div><div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openModal(c.id)} className="p-1 text-slate-400 hover:text-indigo-600"><Icon name="Edit2" size={14}/></button><button onClick={() => handleDelete(c.id)} className="p-1 text-slate-400 hover:text-red-600"><Icon name="Trash2" size={14}/></button></div></div>))}</div>)}
                         {activeTab === 'bells' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {[Shift.First, Shift.Second].map(shift => (
-                                    <div key={shift} className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                                        <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-white border-b pb-2 dark:border-slate-600">{shift}</h3>
-                                        <div className="space-y-2">
+                                    <div key={shift} className="bg-white dark:bg-dark-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                        <div className={`p-4 font-bold text-lg text-white ${shift === Shift.First ? 'bg-indigo-600' : 'bg-purple-600'}`}>
+                                            {shift}
+                                        </div>
+                                        <div className="p-6 space-y-3">
                                             {SHIFT_PERIODS[shift].map(period => {
                                                 const bell = data.bellSchedule.find(b => b.shift === shift && b.period === period) || { start: '', end: '' };
                                                 return (
-                                                    <div key={period} className="flex items-center gap-4 py-1">
-                                                        <div className="w-16 font-bold text-slate-500 dark:text-slate-400 text-sm">{period} урок</div>
-                                                        <input type="time" className="border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-sm bg-transparent dark:text-white focus:border-indigo-500 outline-none" value={bell.start} onChange={e => handleBellChange(shift, period, 'start', e.target.value)} />
-                                                        <span className="text-slate-300">-</span>
-                                                        <input type="time" className="border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-sm bg-transparent dark:text-white focus:border-indigo-500 outline-none" value={bell.end} onChange={e => handleBellChange(shift, period, 'end', e.target.value)} />
+                                                    <div key={period} className="flex items-center gap-4 bg-slate-50 dark:bg-slate-700/50 p-2 rounded-xl">
+                                                        <div className="w-10 h-10 rounded-lg bg-white dark:bg-slate-600 flex items-center justify-center font-black text-slate-500 dark:text-slate-300 shadow-sm">{period}</div>
+                                                        <div className="flex-1 flex items-center gap-2">
+                                                            <input type="time" className="flex-1 border-none bg-transparent font-bold text-slate-800 dark:text-white text-center focus:ring-0" value={bell.start} onChange={e => handleBellChange(shift, period, 'start', e.target.value)} />
+                                                            <span className="text-slate-300">—</span>
+                                                            <input type="time" className="flex-1 border-none bg-transparent font-bold text-slate-800 dark:text-white text-center focus:ring-0" value={bell.end} onChange={e => handleBellChange(shift, period, 'end', e.target.value)} />
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
@@ -715,7 +721,18 @@
                     </div>
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Редактирование">
                         <div className="space-y-4">
-                            {activeTab === 'teachers' && (<><input className="w-full border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:border-indigo-500" placeholder="ФИО Учителя" value={teacherForm.name || ''} onChange={e => setTeacherForm({...teacherForm, name: e.target.value})} /><div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar border border-slate-100 dark:border-slate-700 p-2 rounded-xl">{data.subjects.map(s => (<label key={s.id} className="flex items-center gap-2 p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"><input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" checked={teacherForm.subjectIds?.includes(s.id)} onChange={e => { const current = teacherForm.subjectIds || []; setTeacherForm({...teacherForm, subjectIds: e.target.checked ? [...current, s.id] : current.filter(x => x !== s.id)}); }} /><span className="text-sm dark:text-slate-300">{s.name}</span></label>))}</div></>)}
+                            {activeTab === 'teachers' && (<>
+                                <input className="w-full border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:border-indigo-500" placeholder="ФИО Учителя" value={teacherForm.name || ''} onChange={e => setTeacherForm({...teacherForm, name: e.target.value})} />
+                                <div className="space-y-2">
+                                    <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Смены</div>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" checked={teacherForm.shifts?.includes(Shift.First)} onChange={() => toggleShift(Shift.First)} /><span className="text-sm font-medium dark:text-slate-300">1 смена</span></label>
+                                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" className="rounded text-purple-600 focus:ring-purple-500" checked={teacherForm.shifts?.includes(Shift.Second)} onChange={() => toggleShift(Shift.Second)} /><span className="text-sm font-medium dark:text-slate-300">2 смена</span></label>
+                                    </div>
+                                </div>
+                                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mt-2">Предметы</div>
+                                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar border border-slate-100 dark:border-slate-700 p-2 rounded-xl">{data.subjects.map(s => (<label key={s.id} className="flex items-center gap-2 p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"><input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" checked={teacherForm.subjectIds?.includes(s.id)} onChange={e => { const current = teacherForm.subjectIds || []; setTeacherForm({...teacherForm, subjectIds: e.target.checked ? [...current, s.id] : current.filter(x => x !== s.id)}); }} /><span className="text-sm dark:text-slate-300">{s.name}</span></label>))}</div>
+                            </>)}
                             {activeTab === 'subjects' && (<><input className="w-full border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:border-indigo-500" placeholder="Название предмета" value={subjectForm.name || ''} onChange={e => setSubjectForm({...subjectForm, name: e.target.value})} /><div className="flex items-center gap-4"><span className="text-sm font-bold text-slate-600 dark:text-slate-300">Цвет:</span><input type="color" className="w-20 h-10 cursor-pointer bg-transparent" value={subjectForm.color || '#ffffff'} onChange={e => setSubjectForm({...subjectForm, color: e.target.value})} /></div><div><label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Сложность (СанПиН 1-12)</label><input type="number" min="1" max="12" className="w-full border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:border-indigo-500" value={subjectForm.difficulty || 5} onChange={e => setSubjectForm({...subjectForm, difficulty: parseInt(e.target.value)})} /></div></>)}
                             {activeTab === 'classes' && (<><input className="w-full border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:border-indigo-500" placeholder="Название класса (5А)" value={classForm.name || ''} onChange={e => setClassForm({...classForm, name: e.target.value})} /><div className="grid grid-cols-2 gap-3"><button onClick={() => setClassForm({...classForm, shift: Shift.First})} className={`p-3 rounded-xl border text-sm font-bold transition-all ${classForm.shift === Shift.First ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400'}`}>1 смена</button><button onClick={() => setClassForm({...classForm, shift: Shift.Second})} className={`p-3 rounded-xl border text-sm font-bold transition-all ${classForm.shift === Shift.Second ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400'}`}>2 смена</button></div></>)}
                             <div className="flex justify-end pt-4"><button onClick={handleSave} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-bold shadow-lg shadow-indigo-200 dark:shadow-none">Сохранить</button></div>
@@ -766,7 +783,6 @@
             const copyForMessenger = () => { let text = `*Замены на ${new Date(selectedDate).toLocaleDateString('ru-RU')}*\n\n`; if(affectedLessons.length === 0) text += "Замен нет."; affectedLessons.forEach(l => { const sub = data.substitutions.find(s => s.scheduleItemId === l.id && s.date === selectedDate); const cls = data.classes.find(c => c.id === l.classId); const subj = data.subjects.find(s => s.id === l.subjectId); const rep = sub ? data.teachers.find(t => t.id === sub.replacementTeacherId) : null; const orig = data.teachers.find(t => t.id === l.teacherId); if (rep) text += `✅ ${cls.name} (${l.period} ур): ${subj.name} -> ${rep.name} (вместо ${orig.name})\n`; else text += `❗ ${cls.name} (${l.period} ур): ${subj.name} (${orig.name}) -> НЕТ ЗАМЕНЫ\n`; }); navigator.clipboard.writeText(text); alert("Текст скопирован!"); };
             const candidates = useMemo(() => { if (!currentSubParams || !selectedDayOfWeek) return []; return data.teachers.map(t => { const isAbsent = t.unavailableDates.includes(selectedDate); const isBusy = data.schedule.some(s => s.teacherId === t.id && s.day === selectedDayOfWeek && s.period === currentSubParams.period && s.shift === currentSubParams.shift); const isSpecialist = t.subjectIds.includes(currentSubParams.subjectId); let score = 0; if (isAbsent) score -= 1000; if (isBusy) score -= 100; if (isSpecialist) score += 50; return { teacher: t, isAbsent, isBusy, isSpecialist, score }; }).sort((a, b) => b.score - a.score); }, [data, currentSubParams, selectedDate]);
             
-            // Get context for substitution modal
             const modalContext = useMemo(() => {
                 if(!currentSubParams) return null;
                 const s = data.schedule.find(i => i.id === currentSubParams.scheduleItemId);
@@ -862,6 +878,7 @@
             
             // Teacher Search State
             const [afterPeriod, setAfterPeriod] = useState(4);
+            const [teacherShift, setTeacherShift] = useState(Shift.First);
             
             // Room Search State
             const [roomPeriod, setRoomPeriod] = useState(1);
@@ -876,15 +893,19 @@
             const freeTeachers = useMemo(() => {
                 if (!selectedDayOfWeek) return [];
                 return data.teachers.filter(teacher => {
+                    // Check shift assignment
+                    if (teacher.shifts && !teacher.shifts.includes(teacherShift)) return false;
+                    
                     if (teacher.unavailableDates.includes(selectedDate)) return false;
                     const hasLateLessons = data.schedule.some(s => 
                         s.teacherId === teacher.id && 
                         s.day === selectedDayOfWeek && 
-                        s.period > afterPeriod
+                        s.period > afterPeriod && 
+                        s.shift === teacherShift
                     );
                     return !hasLateLessons;
                 }).sort((a, b) => a.name.localeCompare(b.name));
-            }, [data, selectedDate, selectedDayOfWeek, afterPeriod]);
+            }, [data, selectedDate, selectedDayOfWeek, afterPeriod, teacherShift]);
 
             // Room Logic
             const allKnownRooms = useMemo(() => {
@@ -927,12 +948,21 @@
                          </div>
                         
                         {activeTab === 'teachers' && (
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Свободен после урока №</label>
-                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl w-fit">
-                                    {[1, 2, 3, 4, 5, 6, 7].map(num => (
-                                        <button key={num} onClick={() => setAfterPeriod(num)} className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${afterPeriod === num ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>{num}</button>
-                                    ))}
+                            <div className="flex flex-wrap gap-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Смена</label>
+                                    <div className="flex gap-2 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+                                        <button onClick={() => setTeacherShift(Shift.First)} className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${teacherShift === Shift.First ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>1 смена</button>
+                                        <button onClick={() => setTeacherShift(Shift.Second)} className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${teacherShift === Shift.Second ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>2 смена</button>
+                                    </div>
+                                 </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Свободен после урока №</label>
+                                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl w-fit">
+                                        {[1, 2, 3, 4, 5, 6, 7].map(num => (
+                                            <button key={num} onClick={() => setAfterPeriod(num)} className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${afterPeriod === num ? 'bg-white dark:bg-slate-600 shadow text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}>{num}</button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -976,7 +1006,7 @@
                                     </div>
                                 </div>
                             ))}
-                            {freeTeachers.length === 0 && <div className="col-span-full py-12 text-center text-slate-400">Не найдено учителей, свободных после {afterPeriod} урока.</div>}
+                            {freeTeachers.length === 0 && <div className="col-span-full py-12 text-center text-slate-400">Не найдено учителей, свободных после {afterPeriod} урока в {teacherShift}</div>}
                         </div>
                     )}
 
@@ -1008,14 +1038,69 @@
             const [exportDate, setExportDate] = useState(new Date().toISOString().split('T')[0]);
             const [isGenerating, setIsGenerating] = useState(false);
             const handleImport = (e) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = async (ev) => { try { const json = JSON.parse(ev.target.result); if (json.teachers && json.schedule) { if(window.confirm("Это перезапишет текущую базу данных. Продолжить?")) { await saveData(json); alert("База успешно восстановлена!"); } } else alert("Неверный формат файла."); } catch (err) { alert("Ошибка чтения файла."); } }; reader.readAsText(file); };
-            const exportExcel = () => { let csvContent = "data:text/csv;charset=utf-8,\uFEFFClass,Day,Shift,Period,Subject,Teacher,Direction\n"; data.schedule.forEach(s => { const c = data.classes.find(cls => cls.id === s.classId); const sub = data.subjects.find(subj => subj.id === s.subjectId); const t = data.teachers.find(tch => tch.id === s.teacherId); csvContent += `${c?.name},${s.day},${s.shift},${s.period},${sub?.name},${t?.name},${s.direction || ''}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "schedule_export.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+            
+            const exportStyledExcel = () => {
+                let html = `
+                    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                    <head><meta charset="UTF-8"><style>
+                        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+                        td, th { border: 1px solid #999; padding: 5px; vertical-align: top; }
+                        .header { background-color: #f3f4f6; font-weight: bold; text-align: center; }
+                        .class-cell { font-size: 14px; font-weight: bold; text-align: center; vertical-align: middle; }
+                        .subject { font-weight: bold; font-size: 11px; }
+                        .meta { font-size: 10px; color: #555; }
+                    </style></head><body><table>
+                `;
+
+                DAYS.forEach(day => {
+                    html += `<tr><td colspan="8" style="background-color:#4f46e5; color:white; font-size:16px; font-weight:bold; text-align:center;">${day}</td></tr>`;
+                    [Shift.First, Shift.Second].forEach(shift => {
+                        const classes = data.classes.filter(c => c.shift === shift);
+                        if (classes.length === 0) return;
+                        
+                        html += `<tr><td colspan="8" style="background-color:#e0e7ff; font-weight:bold;">${shift}</td></tr>`;
+                        html += `<tr><th class="header">Класс</th>`;
+                        SHIFT_PERIODS[shift].forEach(p => html += `<th class="header">${p} урок</th>`);
+                        html += `</tr>`;
+
+                        classes.forEach(c => {
+                            html += `<tr><td class="class-cell">${c.name}</td>`;
+                            SHIFT_PERIODS[shift].forEach(p => {
+                                const items = data.schedule.filter(s => s.classId === c.id && s.day === day && s.shift === shift && s.period === p);
+                                html += `<td style="height: 60px;">`;
+                                items.forEach(item => {
+                                    const sub = data.subjects.find(s => s.id === item.subjectId);
+                                    const teach = data.teachers.find(t => t.id === item.teacherId);
+                                    html += `<div style="background-color: ${sub?.color || '#fff'}; padding: 2px; margin-bottom: 2px; border: 1px solid #eee;">
+                                        <div class="subject">${sub?.name || ''} ${item.direction || ''}</div>
+                                        <div class="meta">${teach?.name || ''} ${item.roomId ? `(Каб. ${item.roomId})` : ''}</div>
+                                    </div>`;
+                                });
+                                html += `</td>`;
+                            });
+                            html += `</tr>`;
+                        });
+                    });
+                });
+                
+                html += `</table></body></html>`;
+                const blob = new Blob([html], { type: "application/vnd.ms-excel" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `Расписание_Гимназия.xls`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
             const handleDownloadPng = async () => { if (!printRef.current || !window.html2canvas) return; setIsGenerating(true); try { const canvas = await window.html2canvas(printRef.current, { scale: 2, backgroundColor: '#ffffff', logging: false }); const link = document.createElement('a'); link.download = `Замены_${exportDate}.png`; link.href = canvas.toDataURL('image/png'); link.click(); } catch (e) { console.error(e); alert("Ошибка при создании изображения"); } setIsGenerating(false); };
             const subsForDate = data.substitutions.filter(s => s.date === exportDate);
             return (
                 <div className="max-w-5xl mx-auto space-y-8 pb-20">
                     <section className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"><h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><Icon name="Download" className="text-indigo-600 dark:text-indigo-400"/> Резервное копирование</h2><div className="flex flex-wrap gap-4"><button onClick={() => dbService.exportJson(data)} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none flex items-center gap-2"><Icon name="Download" size={20}/> Скачать JSON</button><div className="relative"><input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="px-6 py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-600 transition flex items-center gap-2"><Icon name="Upload" size={20}/> Загрузить JSON</button></div></div></section>
                     <section className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"><div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-6"><div><h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2"><Icon name="Image" className="text-indigo-600 dark:text-indigo-400"/> Экспорт замен (PNG)</h2></div><div className="flex gap-4 items-center"><input type="date" value={exportDate} onChange={e => setExportDate(e.target.value)} className="border border-slate-200 dark:border-slate-600 p-2 rounded-lg font-bold outline-none focus:border-indigo-500 bg-transparent dark:text-white"/><button onClick={handleDownloadPng} disabled={isGenerating} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none flex items-center gap-2 disabled:opacity-50">{isGenerating ? 'Создание...' : <><Icon name="Download" size={20}/> Скачать PNG</>}</button></div></div><div className="overflow-auto bg-slate-100 dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-center"><div ref={printRef} className="bg-white p-8 min-w-[800px] max-w-[1000px] shadow-xl text-slate-900"><div className="flex justify-between items-end border-b-2 border-slate-800 pb-4 mb-6"><div><h1 className="text-3xl font-black uppercase tracking-tight mb-1 text-slate-800">Замена Учителей</h1><p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Гимназия • Официальный документ</p></div><div className="text-right"><div className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Дата</div><div className="text-xl font-bold text-slate-800">{new Date(exportDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div></div>{subsForDate.length === 0 ? (<div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50"><p className="text-slate-400 font-medium italic">Замен на этот день нет</p></div>) : (<table className="w-full text-left border-collapse"><thead><tr className="border-b border-slate-200"><th className="py-3 px-2 font-black text-slate-400 text-xs uppercase tracking-wider w-16 text-center">Урок</th><th className="py-3 px-2 font-black text-slate-400 text-xs uppercase tracking-wider w-24">Класс</th><th className="py-3 px-2 font-black text-slate-400 text-xs uppercase tracking-wider">Предмет</th><th className="py-3 px-2 font-black text-slate-400 text-xs uppercase tracking-wider w-1/4">Отсутствует</th><th className="py-3 px-2 font-black text-slate-400 text-xs uppercase tracking-wider w-1/4">Заменяет</th><th className="py-3 px-2 font-black text-slate-400 text-xs uppercase tracking-wider w-20 text-right">Каб.</th></tr></thead><tbody className="divide-y divide-slate-100">{subsForDate.map(sub => { const s = data.schedule.find(x => x.id === sub.scheduleItemId); if (!s) return null; const cls = data.classes.find(c => c.id === s.classId); const subj = data.subjects.find(x => x.id === s.subjectId); const t1 = data.teachers.find(t => t.id === sub.originalTeacherId); const t2 = data.teachers.find(t => t.id === sub.replacementTeacherId); return (<tr key={sub.id}><td className="py-3 px-2 text-center font-bold text-slate-800 text-lg">{s.period}</td><td className="py-3 px-2 font-bold text-slate-700">{cls?.name}</td><td className="py-3 px-2"><div className="font-semibold text-slate-800">{subj?.name}</div>{s.direction && <div className="text-[10px] text-slate-500 bg-slate-100 inline-block px-1 rounded mt-0.5">{s.direction}</div>}</td><td className="py-3 px-2 text-red-400 line-through text-sm font-medium decoration-red-200">{t1?.name}</td><td className="py-3 px-2 text-emerald-700 font-bold text-sm">{t2?.name}</td><td className="py-3 px-2 text-right font-mono text-slate-500">{s.roomId || '—'}</td></tr>) })}</tbody></table>)}<div className="mt-8 pt-4 border-t border-slate-100 flex justify-between items-end text-[10px] text-slate-400"><div>Сформировано автоматически</div><div className="flex flex-col items-end gap-2"><div className="h-px w-32 bg-slate-300"></div><div>Подпись администрации</div></div></div></div></div></section>
-                    <section className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"><h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><Icon name="FileSpreadsheet" className="text-emerald-600 dark:text-emerald-400"/> Экспорт данных</h2><button onClick={exportExcel} className="px-6 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900 rounded-xl font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition flex items-center gap-2"><Icon name="FileSpreadsheet" size={20}/> Скачать CSV (Excel)</button></section>
+                    <section className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"><h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><Icon name="FileSpreadsheet" className="text-emerald-600 dark:text-emerald-400"/> Экспорт данных</h2><button onClick={exportStyledExcel} className="px-6 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900 rounded-xl font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition flex items-center gap-2"><Icon name="FileSpreadsheet" size={20}/> Скачать Excel (XLS)</button></section>
                 </div>
             );
         };
@@ -1035,8 +1120,8 @@
                     <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-800 border-r border-slate-200 dark:border-slate-700 transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} no-print`}>
                         <div className="h-full flex flex-col">
                             <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-700">
-                                <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
-                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v4.1</p></div>
+                                <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none"><Icon name="GraduationCap" size={24} strokeWidth={2} /></div>
+                                <div><h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white">Гимназия</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Менеджер v5.0</p></div>
                                 <button className="lg:hidden ml-auto text-slate-400" onClick={() => setIsMobileMenuOpen(false)}><Icon name="X" size={24} /></button>
                             </div>
                             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
